@@ -10,7 +10,8 @@
 #include <netinet/in.h>  
 #include <unistd.h>
 #include <stdio.h> 
-#include <stdlib.h> 
+#include <stdlib.h>
+#include <endian.h> 
 #include "common.h"
 
 /*
@@ -63,6 +64,21 @@ bool cargarArchivo(std::string &nombre, std::string &contenido){
     return true;
 }
 
+/*
+PRE: Recibe el nombre (std::string &) de un archivo, la terminacion (std::string &)
+que se le quiera agregar al nombre del archivo, y un texto (string &) que sera lo
+que se escribira en el archivo.
+*/
+bool escribirArchivo(std::string &nombre, std::string &fin, std::string &texto){
+    std::string nombreArchivo = nombre + fin;
+    std::ofstream archivo.open(nombreArchivo);
+    if (! archivo.is_open){
+        return false;
+    }
+    archivo << texto;
+    archivo.close();
+}
+
 //TDA Hash
 
 /*Crea un Hash*/
@@ -84,46 +100,6 @@ uint16_t Hash::hashear(std::string &cadena, size_t largo){
         resultado += (uint8_t)cadena[i]; //entero sin signo de un byte
     }
     return resultado;
-}
-
-void hash_prueba_hola(){
-    std::string hola = "hola\0";
-    Hash hash;
-    uint16_t resultado = hash.hashear(hola, hola.size());
-    uint16_t hash_real = 420;
-    bool todoOK = (resultado == hash_real);
-    std::cout << hola << "\n";
-    std::cout << "hash real: " << hash_real << "\n";
-    std::cout << "hash calculado: " << resultado << "\n";
-    std::cout << "todoOK : " << todoOK << "\n";
-}
-
-void hash_prueba_enunciado(){
-    std::string certificado = "certificate:\n\tserial number: 11 (0x0000000b)\n\tsubject: Federico Manuel Gomez Peter\n\tissuer: Taller de programacion 1\n\tvalidity:\n\t\tnot before: Mar 28 21:33:04 2019\n\t\tnot after: May 27 21:33:04 2019\n\tsubject public key info:\n\t\tmodulus: 253 (0x00fd)\n\t\texponent: 17 (0x11)\0";
-    Hash hash;
-    uint16_t resultado = hash.hashear(certificado, certificado.size());
-    uint16_t hash_real = 20603;
-    bool todoOK = (resultado == hash_real);
-    std::cout << certificado << "\n";
-    std::cout << "hash real: " << hash_real << "\n";
-    std::cout << "hash calculado: " << resultado << "\n";
-    std::cout << "todoOK : " << todoOK << "\n";
-}
-
-
-void hash_prueba_certificados_iguales(){
-    std::string certificado1 = "certificate:​\n\t​serial number: 11 (0x0000000b)​\n\t​subject: Federico Manuel Gomez Peter​\n\t​issuer: Taller de programacion 1​\n\t​validity:​\n\t\t​not before: Mar 28 21:33:04 2019​\n\t\t​not after: May 27 21:33:04 2019​\n\t​subject public key info:​\n\t\t​modulus: 253 (0x00fd)​\n\t\t​exponent: 17 (0x11)\0";
-    std::string certificado2 = "certificate:\n\tserial number: 11 (0x0000000b)\n\tsubject: Federico Manuel Gomez Peter\n\tissuer: Taller de programacion 1\n\tvalidity:\n\t\tnot before: Mar 28 21:33:04 2019\n\t\tnot after: May 27 21:33:04 2019\n\tsubject public key info:\n\t\tmodulus: 253 (0x00fd)\n\t\texponent: 17 (0x11)\0";
-    std::cout << "certificado 1: " << certificado1 << "\n";
-    std::cout << "certificado 2: " << certificado2 << "\n";
-    std::cout << "¿Son iguales? : " << (certificado2 == certificado1) << "\n";
-    for (size_t i = 0; i < certificado1.size(); ++i){
-        if (certificado1[i] != certificado2[i]){
-            std::cout << "El caracter diferente es el n° " << i << "\n";
-            std::cout << "Caracter diferente certificado 1 es : " << certificado1[i] << "\n";
-            std::cout << "Caracter diferente certificado 2 es : " << certificado2[i] << "\n";  
-        }
-    }
 }
 
 //TDA Encriptador
@@ -164,40 +140,6 @@ uint32_t Encriptador::encriptar(uint32_t huella, uint8_t exp, uint16_t mod){
     return retorno;
 }
 
-void encriptador_prueba_hola(){
-    std::string hola = "hola\0";
-    Hash hash;
-    uint16_t huella = hash.hashear(hola, hola.size());
-    Encriptador encript;
-    uint32_t resultado_real = 354;
-    uint32_t resultado = encript.encriptar(huella, 19, 253);
-    bool todoOK = (resultado == resultado_real);
-    std::cout << "encriptado real: " << resultado_real << "\n";
-    std::cout << "encriptado calculado: " << resultado << "\n";
-    std::cout << "todoOK : " << todoOK << "\n";
-
-}
-
-void encriptador_doble_prueba_certificado2(){
-    std::string certificado2 = "certificate:\n\tserial number: 1 (0x00000001)\n\tsubject: Federico Manuel Gomez Peter\n\tissuer: Taller de programacion 1\n\tvalidity:\n\t\tnot before: Mar 28 21:33:04 2019\n\t\tnot after: May 27 21:33:04 2019\n\tsubject public key info:\n\t\tmodulus: 253 (0x00fd)\n\t\texponent: 19 (0x13)";
-    Hash hash;
-    uint16_t huella = hash.hashear(certificado2, certificado2.size());
-    uint16_t resultado_hash_real = 20509;
-    Encriptador encript; 
-    uint32_t resultado1 = encript.encriptar(huella, 17, 253);
-    uint32_t resultado1_real = 39039;
-    uint32_t resultado2 = encript.encriptar(resultado1, 19, 253);
-    uint32_t resultado2_real = 38011;
-    std::cout << "hash_real : "<< resultado_hash_real << "\n";
-    std::cout << "hash calculado : "<< huella << "\n";
-    std::cout << "¿Son iguales hash? : "<< (resultado_hash_real == huella) << "\n";
-    std::cout << "encriptado privado 1 real : "<< resultado1_real << "\n";   
-    std::cout << "encriptado privado 1 calculado : "<< resultado1 << "\n";
-    std::cout << "¿Son iguales encriptaciones 1? : "<< (resultado1_real == resultado1) << "\n";
-    std::cout << "encriptado publico 2 real : "<< resultado2_real << "\n";   
-    std::cout << "encriptado publico 2 calculado : "<< resultado2 << "\n";
-    std::cout << "¿Son iguales encriptaciones 2? : "<< (resultado2_real == resultado2) << "\n";
-}   
 
 //Imprimir en hexagesimal : printf("Numero hexagesimal %x", numeroEntero)
 
@@ -389,7 +331,7 @@ void encriptador_doble_prueba_certificado2(){
     igual a cero, significa que ya no queda nada mas 
     que recibir.
     */
-    int Socket::socket_recibir_algo(void *buffer, size_t largo){
+    int Socket::recibir_algo(void *buffer, size_t largo){
         int largoBuff = largo;
         int estado = 0;
         bool hayError = false; //todoOK = true;
@@ -460,10 +402,7 @@ bool ClaveRSA::cargar_claves(std::string &nombreArchivo){
 
 /*
 PRE: Recibe una referencia al socket de comunicacion.
-POST: Inicializa un protocolo de comunicacion, donde
-los mensaje se enviar primero indicando su longitud en
-enteros sin signo de 4 bytes big endian, y luego se 
-envia el mensaje.
+POST: Inicializa un protocolo de comunicacion.
 */
 Protocolo::Protocolo(Socket &skt) : skt(skt) {}
 
@@ -471,27 +410,415 @@ Protocolo::Protocolo(Socket &skt) : skt(skt) {}
 Protocolo::~Protocolo(){}
 
 /*
-PRE: Recibe el largo (uint32_t) de un mensaje a enviar, 
+PRE: Recibe el largo/cantidad de bytes (uint32_t) 
+de un mensaje a enviar. 
 y el mensaje a enviar (const void *).
-POST: Envia el mensaje (todo) segun protocolo especifica
+POST: Envia el mensaje, primero enviando la longitud
+del mismo, seguido del mensaje.
+Devuelve true si logro enviar el mensaje, false en caso 
+contrario.
 */
-Protocolo::enviar_mensaje(const void *mensaje, uint32_t largo){
+bool Protocolo::enviar_mensaje(std::string &mensaje){ //const char *mensaje, uint32_t largo
+    uint32_t largo = mensaje.size(); 
     bool seEnvio = true;
-    uint32_t largoBE = htonl(largo);
-    seEnvio = this->skt.enviar_todo(largoBE, 4); 
+    uint32_t largoBE = htobe32(largo);
+    char *buffer = (char*) &largoBE;
+    seEnvio = this->skt.enviar_todo(buffer, 4); 
     // las longitudes se envian en 4 bytes
     if (! seEnvio){
         return false;
     }
-    seEnvio = this->skt.enviar_todo(mensaje, largo);
+    seEnvio = this->skt.enviar_todo(mensaje.data(), largo);
     return seEnvio;
 }
 
-int main(){
-    hash_prueba_hola();
-    hash_prueba_enunciado();
-    //hash_prueba_certificados_iguales();
-    encriptador_prueba_hola();
-    encriptador_doble_prueba_certificado2();
-    return 0;
+/*
+PRE: Recibe una referencia a una string (std::string &).
+POST: Devuelve el largo del mensaje recibido, si logro
+correctamente recibir y guardar el mensaje recibido en
+la referencia recibida.
+Si ocurrio algun error devuelve 0;  
+*/
+uint32_t Protocolo::recibir_mensaje(std::string &mensaje){
+    uint32_t largoMensaje = 0;
+    bool todoOK = true;
+    todoOK = this->recibir_cuatro_bytes(largoMensaje);
+    if (! todoOK){
+        return 0;
+    }
+    char *buffer = new char[largoMensaje];
+    int bytesRecibidos = this->skt.recibir_algo(buffer, largoMensaje);
+    if (bytesRecibidos != largoMensaje){
+        delete buffer;
+        return 0;
+    }
+    mensaje = buffer;
+    delete buffer;
+    return largoMensaje;
+}
+
+/*
+PRE: Recibe un valor (uint32_t) y una cantidad de bytes 
+a enviar:
+1: un byte
+2: dos bytes
+4: cuatro bytes
+POST: lo bytes (recibidos) menos significativos del valor
+recibido. 
+Si bytes es 2 o 4, se envia en formato big endian.
+Devuelve true si logro enviar los bytes del valor,
+false en caso contrario.
+*/
+bool Protocolo::enviar_bytes(uint32_t valor, size_t bytes){
+    bool todoOK = false;
+    if (bytes == 1){
+        uint8_t valorEnviar = (valor & 0x000000FF);
+        char *buffer = (char *) &valorEnviar;
+        todoOK = this->skt.enviar_todo(&valorEnviar, 1);
+    }
+    if (bytes == 2){
+        uint16_t valorEnviar = (valor & 0x0000FFFF);
+        uint16_t valorEnviarBE = htobe16(valorEnviar);
+        char *buffer = (char*) &valorEnviarBE
+
+        todoOK = this->skt.enviar_todo(buffer, 2); 
+    }
+    if (bytes == 4){
+        uint32_t valorEnviar = valor;
+        uint32_t valorEnviarBE = htobe32(valorEnviar);
+        const char *buffer = (char *) &valorEnviarBE;
+        todoOK = this->skt.enviar_todo(buffer, 4); 
+    }
+    return todoOK;
+}
+
+/*
+PRE: Recibe una referencia a un entero sin signo de 1 bytes
+(uint8_t &).
+POST: Devuelve true si logro recibir correctamente 1 bytes
+y guardalo en la referencia recibida; false en caso 
+contrario.
+*/
+bool Protocolo::recibir_un_byte(uint8_t &valor){
+    char buffer[1];
+    int bytesRecibidos = this->skt.recibir_algo(buffer, 1);
+    if (bytesRecibidos != 1){
+        return false;
+    }
+    valor = *(uint8_t*)buffer;
+    return true;
+}
+
+/*
+PRE: Recibe una referencia a un entero sin signo de 2 bytes
+(uint16_t &).
+POST: Devuelve true si logro recibir correctamente 2 bytes
+en big endian, y escribirlos en el endianess local en la
+referencia recibida; false en caso contrario.
+*/
+bool Protocolo::recibir_dos_bytes(uint16_t &valor){
+    char buffer[2];
+    int bytesRecibidos = this->skt.recibir_algo(buffer, 2);
+    if (bytesRecibidos != 2){
+        return false;
+    }
+    uint16_t valorBE = *(uint16_t*)buffer;
+    valor = betoh(valorBE);
+    return true;
+}
+
+/*
+PRE: Recibe una referencia a un entero sin signo de 4 bytes
+(uint32_t &).
+POST: Devuelve true si logro recibir correctametne 4 bytes
+en big endian, y escribirlos en el endianess local en la 
+referencia recibida; false en caso contrario.
+*/
+bool Protocolo::recibir_cuatro_bytes(uint32_t &valor){
+    char buffer[2];
+    int bytesRecibidos = this->skt.recibir_algo(buffer, 2);
+    if (bytesRecibidos != 2){
+        return false;
+    }
+    uint16_t valorBE = *(uint16_t*)buffer;
+    valor = betoh(valorBE);
+    return true;
+}
+
+std::string a_hexa32_string(uint32_t &valor){
+    char buffer[11] //+0x + 8 letras +\0
+    size_t largo = sizeof(buffer);
+    snprintf(buffer, largo, "0x%08x", valor);
+    return std::string(buffer);
+}
+
+std::string a_hexa16_string(uint16_t &valor){
+    char buffer[7]; //+0x + 4 letras + \0
+    size_t largo = sizeof(buffer);
+    snprintf(buffer, largo, "0x%04x", valor);
+    return std::string(buffer);
+}
+
+std::string a_hexa8_string(uint8_t &valor){
+    char buffer[5]; //+0x + 2 letras + \0
+    size_t largo = sizeof(buffer);
+    snprintf(buffer, largo, "0x%02x", valor);
+    return std::string(buffer);
+}
+
+/*Inicializa un certificado sin informacion.*/
+Certificado::Certificado(){
+    this->numeroSerie = 0;
+    this->asunto = "";
+    this->sujeto = "";
+    this->inicio = "";
+    this->fin = "";
+    this->exp = 0;
+    this->mod = 0;
+}
+
+/*
+PRE: Recibe el nombre (std::string &) a un archivo que
+tiene un certificado ya creado.
+POST: Carga el certificado con la informacion del 
+archivo.
+Devuelve true si logro lo anterior, false en caso 
+contrario.
+*/
+/*
+bool Certificado::cargar(std::string &nombreArchivo){
+    ifstream archCertif.open(nombreArchivo);
+    if (! archCertif.is_open()){
+        return false;
+    }
+    std::string linea = 0;
+    std::getline(linea, );
+    while (archCertif.is_good()){
+        std::vector<std::string> lineaSplit(0);
+        split(linea, "\t", lineaSplit);
+    }
+}
+*/
+/*
+PRE: Recibe las claves publicas del cliente (ClaveRSA &, con los 
+expPublico y modulo correctos), y un vector de strings con informacion
+de el sujeto del certificado, la fecha de inicio, y de final 
+(en ese orden).
+POST: Inicializa un certificado con dicha informacion. 
+*/
+Certificado::Certificado(ClaveRSA &clvClnt, std::vector<std::string> &info){
+    this->numeroSerie = 0;
+    this->asunto = ""
+    this->sujeto = info[0];
+    this->inicio = info[1];
+    this->fin = info[2];
+    this->exp = clvClnt->expPublico;
+    this->mod = clvClnt->mod;
+}
+
+/*Destruye un certificado*/
+Certificado::~Certificado(){}
+
+/*
+PRE: Recibe un socket conectado con otro socket.
+POST: Recibe y almacena la informacion de un 
+certificado en el orden en que el metodo enviar
+la envia.
+Devuelve true, si logro lo anterior con exito,
+false en caso contrario.
+*/
+bool recibir(Socket &skt){
+    Protocolo proto(skt);
+    uint32_t bytesRecibidos = 0;
+    bool todoOK = true;
+    todoOK = proto.recibir_cuatro_bytes(this->numeroSerie);
+    if (! todoOK){
+        return false;
+    }
+
+    bytesRecibidos = proto.recibir_mensaje(this->asunto);
+    if (bytesRecibidos == 0){
+        return false;
+    }
+
+    bytesRecibidos = proto.recibir_mensaje(this->sujeto);
+    if (bytesRecibidos == 0){
+        return false;
+    }
+
+    bytesRecibidos = proto.recibir_mensaje(this->inicio);
+    if (bytesRecibidos == 0){
+        return false;
+    }
+
+    bytesRecibidos = proto.recibir_mensaje(this->fin);
+    if (bytesRecibidos == 0){
+        return false;
+    }
+    todoOK = proto.recibir_dos_bytes(this->mod);
+    if (! todoOK){
+        return false;
+    }
+    return proto.recibir_un_byte(this->exp);
+}
+
+bool Certificado::enviar(Socket &skt){
+    Protocolo proto(skt);
+    bool todoOK = true;
+    todoOK = proto.enviar_bytes(this->numeroSerie, 4);
+    if (! todoOK){
+        return false;
+    }
+
+    todoOK = proto.enviar_mensaje(this->asunto);
+    if (! todoOK){
+        return false;
+    }
+
+    todoOK = proto.enviar_mensaje(this->sujeto);
+    if (! todoOK){
+        return false;
+    }
+
+    todoOK = proto.enviar_mensaje(this->inicio);
+    if (! todoOK){
+        return false;
+    }
+
+    todoOK = proto.enviar_mensaje(this->fin);
+    if (! todoOK){
+        return false;
+    }
+    
+    todoOK = proto.enviar_bytes(this->mod, 2);
+    if (! todoOK){
+        return false;
+    }
+    return proto.enviar_bytes(this->exp, 1);
+}
+
+/*
+PRE: Recibe un socket conectado con un cliente que 
+desee crear un certificado.
+POST: Recibe los parametros para crear el certificado
+en el orden que los envia el metodo enviar_parametros.
+Devuelve true si logro recibir y guardar en si mismo
+todos estos parametros recibidos; false en caso 
+contrario.
+*/
+bool Certificado::recibir_parametros(Socket &skt){
+    Protocolo proto(this->skt);
+    bool todoOK = true;
+    uint32_t bytesRecibidos = 0;
+    //Recibimos el subject
+    bytesRecibidos = proto.recibir_mensaje(this->subject);
+    if (bytesRecibidos == 0){
+        return false;
+    }
+
+    //Recibimos modulo
+    todoOK = proto.recibir_dos_bytes(this->modulo);
+    if (! todoOK){
+        return false;
+    }
+
+    //Recibimos exponente
+    todoOK = proto.recibir_un_byte(this->exp);
+    if (! todoOK){
+        return false;
+    }
+
+    //Recibimos fecha de inicio
+    bytesRecibidos = proto.recibir_mensaje(this->inicio);
+    if (bytesRecibidos == 0){
+        return false;
+    }
+
+    //Recibimos fecha de fin
+    bytesRecibidos = proto.recibir_mensaje(this->fin);
+    
+    return (bytesRecibidos == 0);
+}
+
+/*
+PRE: Recibe un socket conectado con el servidor de 
+una autoridad certificante.
+POST: Envia los parametros que la autoridad necesita
+del certificado actual para certificarlo, en el orden
+que la autoridad certificante los espera.
+Devuelve true si logro lo anterior; false en caso
+contrario. 
+*/
+bool Certificado::enviar_parametros(Socket &skt){
+    Protocolo proto(this->skt);
+    bool todoOK = true;
+
+    //Enviamos el subject
+    todoOK = proto.enviar_mensaje(this->sujeto);
+    if (!todoOK) {
+        return false;
+    }
+
+    ///Enviamos el modulo del cliente
+    todoOK = proto.enviar_bytes(this->modulo, 2);
+    //2 bytes
+    if (!todoOK) {
+        return false;
+    }
+
+    //Enviamos el exponente publico del cliente
+    todoOK = proto.enviar_bytes(this->exp, 1);
+    //1 byte
+    if (!todoOK) {
+        return false;
+    }
+    //Enviamos la fecha de inicio del certificado
+    todoOK = proto.enviar_mensaje(this->inicio);
+    if (!todoOK) {
+        return false;
+    }
+
+    //Enviamos fecha finalizacion del certificado 
+    todoOK = proto.enviar_mensaje(this->fin);
+
+    return todoOK;
+}
+
+/*
+PRE: Recibe una referencia a una string (std::string &).
+POST: Copia en la referencia la representacion del certificado 
+actual.
+*/
+void a_string(std::string &cadena){
+    std::string certificado = "certificate:\n";
+    certificado += "\tserial number: " + this->numeroSerie; 
+    certificado += a_hexa32_string(this->numeroSerie) + "\n"; 
+    certificado += "\tsubject: " + this->sujeto + "\n";
+    certificado += "\tissuer: " + this->asunto + "\n"; //Taller de programacion 1
+    certificado += "\t​validity:​\n";
+    certificado += "\t\tnot before: " + this->inicio + "\n";
+    certificado += "\t\tnot after: " + this->fin + "\n";
+    certificado += "\tsubject public key info:\n";
+    certificado += "\t\tmodulus: " + std::string(this->mod);
+    certificado += a_hexa16_string(this->mod) + "\n"; 
+    certificado += "\t\texponent: " + std::string(this->exp); 
+    certificado += a_hexa8_string(this->exp) + "\n"; 
+    cadena = certificado;
+}
+
+/*Devuelve el hash de certificado actual*/
+uint32_t hashear(){
+    std::string certificado = 0;
+    this->a_string(certificado);
+    Hash hash;
+    return hash.hashear(certificado, certificado.size());
+}
+
+/*
+Crea un archivo <sujeto>.cert y guarda en el certificado actual.
+*/
+bool guardar(){
+    std::string certificado = 0;
+    this->a_string(certificado);
+    return escribirArchivo(this->subject, ".cert", certificado);
 }

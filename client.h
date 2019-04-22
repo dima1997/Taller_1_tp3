@@ -33,15 +33,51 @@ class Tiempo {
     void Tiempo::representar(std:string &representacion);
 };
 
-
-class Certificado {
+class Cliente {
     public:
-    Socket &skt;
-    Certificado(Socket &skt);
-    ~Certificado();
-
-    crear(std::string &clvsClnt, std::string &publSvr, std::string &infoCert);
+    Socket *skt;
+    /*
+    PRE: Recibe los nombres (std::string &) del host y
+    puerto al que se conectara. 
+    POST: Inicializa un cliente que pide crear y revocar
+    certificados.
+    */
+    Cliente(str &host, str &puerto);
     
-};
+    /*Destruye al cliente.*/
+    ~Cliente();
+    
+    /*
+    PRE: Recibe el nombre (std::string &) del archivo donde estan 
+    las claves del cliente , el nombre (std::string &) del archivo 
+    donde estan las claves publicas del servidor de la autoridad 
+    certificante, y el nombre (std::string &) del archivo donde 
+    esta la informacion para crear el certificado.
+    POST: Devuelve true, si logro crear un certificado 
+    correctamente, false en caso contrario.
+    */
+    bool Cliente::crear(str &ifCert, str &clvsClnt, str &pblSvr);
+
+    /*
+    PRE: Recibe un vector de strings con la informacion
+    para crear el certificado (subject, fecha de inicio, 
+    fecha de finalizacion) (stringVector &); y una clave
+    rsa (ClaveRSA &).
+    POST: Envia los parametros necesarios, en el orden 
+    correcto, al servidor para crear un certificado.
+    */
+    bool Cliente::enviar_info_creacion(strVec &info, ClaveRSA &clvClnt);
+    
+    /*
+    PRE: Recibe las claves del cliente y el servidor (ClaveRSA &), y el subject
+    (std::string &) del certificado usado para crearlo.
+    POST: Devuelve true si logro recibir y procesar las respuesta del servidor
+    a la creacion de un certificado (comprueba hashes y guarda certificado); 
+    devuelve false en caso de algun error ajeno los esperados.
+    */
+    bool Cliente::recibir_certif(ClaveRSA &clvClt, ClaveRSA &clvSvr, str &sbjct);
+    
+    bool revocar(str &nombreCertif, str &nombreClvClnt, str &nombreClvSvr)
+}
 
 #endif // CLIENT_H

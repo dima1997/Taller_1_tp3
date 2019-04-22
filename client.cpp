@@ -6,7 +6,8 @@
 #define LARGO_TIEMPO_MAXIMO 20
 #define DIAS_SUMAR_INICIO_CERTIFICADO 30
 
-typedef std::vector<std::string> stringVector;
+typedef std::vector<std::string> strVec;
+typedef std::string str;
 
 /*Inicializa el tiempo en el horario actual.*/
 Tiempo::Tiempo(){
@@ -72,16 +73,20 @@ void Tiempo::representar(std::string &representacion){
 }
 
 /*
-PRE: Recibe un socket ya conectado con el servidor 
-de la autoridad certificante.
-POST: Inicializa un certificado
+PRE: Recibe los nombres (std::string &) del host y
+puerto al que se conectara. 
+POST: Inicializa un cliente que pide crear y revocar
+certificados.
 */
-Ceertificado::Certificado(Socket &skt) : skt(skt){}
+Cliente::Cliente(str &host, str &puerto){
+    this->skt = new Socket();
+    this->skt->conectar(host.data(), puerto.data());
+}
 
-/*
-Destruye un certificado
-*/
-Certificado::~Certificado(){}
+/*Destruye al cliente.*/
+Cliente::~Cliente(){
+    delete this->skt;
+}
 
 /*
 PRE: Recibe el nombre (string &) de un archivo que contengo 
@@ -92,7 +97,7 @@ POST: Carga el la informacion del archivo en el vector de
 recibido.
 Devuelve true si logro lo anterior, false en caso contrario.
 */
-bool Certificado::cargar_info(std::string &arch, stringVector &info){
+bool Cliente::cargar_info(std::string &arch, strVec &info){
     std::string contenido = 0;
     bool todoOK = cargarArchivo(nombreArch, contenido);
     if (! todoOK){
@@ -118,57 +123,106 @@ bool Certificado::cargar_info(std::string &arch, stringVector &info){
 
 }
 
-bool Certificado::enviar_info_creacion(stringVector &info, ClaveRSA &clvClnt){
+/*
+PRE: Recibe un vector de strings con la informacion
+para crear el certificado (subject, fecha de inicio, 
+fecha de finalizacion) (stringVector &); y una clave
+rsa (ClaveRSA &).
+POST: Envia los parametros necesarios, en el orden 
+correcto, al servidor para crear un certificado.
+*/
+bool Cliente::solicitar_creacion(Certificado &certif){
     Protocolo proto(this->skt);
-    
     //Enviamos el comando de creacion
     todoOK = proto.enviar_bytes(0,1);
     if (!todoOK) {
         return false;
     }
-    //Enviamos el subject
-    std::string &subject = info[0];
-    uint32_t largoSubject = subject.size();
-    const char* subjetoBuff = subject.data();
-    todoOK = proto.enviar_mensaje(subjetoBuff, largoSubject);
-    if (!todoOK) {
+    return certif.enviar_parametros(this->skt);
+}
+
+/*
+PRE: Recibe las claves del cliente y el servidor (ClaveRSA &), y el subject
+(std::string &) del certificado usado para crearlo.
+POST: Devuelve true si logro recibir y procesar las respuesta del servidor
+a la creacion de un certificado (comprueba hashes y guarda certificado); 
+devuelve false en caso de algun error ajeno los esperados.
+*/
+bool Cliente::recibir_certificado(ClaveRSA &clvClt, ClaveRSA &clvSvr){
+    bool todoOK = true;
+
+    //¿el esta sujeto vigente?
+    Protocolo proto(this->skt);
+    uint8_t vigencia = 0;
+    todoOK = proto.recibir_un_byte(vigencia);
+    if (! todoOK){
+        return false;
+    }
+    if (vigencia == 0){
+        //El subject ya esta vigente 
+        std::cout << ​ "Error: ya existe un certificado.\n";
+        return true; 
+    }
+    Certificado certif();
+    todoOK = certif.recibir(this->skt);
+    if (! todoOK){
         return false;
     }
 
-    ///Enviamos el modulo del cliente
-    uint16_t modulo = claveCliente->modulo; 
-    todoOK = proto.enviar_bytes(modulo, 2);
-    //2 bytes
-    if (!todoOK) {
+    uint32_t huellaServidor = 0;
+    todoOK = proto.recibir_cuatro_bytes(huellaServidor);
+    if (! todoOK){
         return false;
     }
 
-    //Enviamos el exponente publico del cliente
-    uint8_t expPublico = claveCliente->expPublico;
-    todoOK = proto.enviar_bytes(expPublico, 1);
-    //1 byte
-    if (!todoOK) {
-        return false;
-    }
-    //Enviamos la fecha de inicio del certificado
-    std::string &fechaInicio = info[1];
-    uint32_t largoFechaInicio = fechaInicio.size();
-    const char *fechaInicioBuff = fechaInicio.data();
-    todoOK = proto.enviar_mensaje(fechaInicioBuff, largoFechaInicio);
-    if (!todoOK) {
-        return false;
+    uint16_t hashCalculado = certif.hashear();
+
+    Encriptador encrip;
+    
+    //Desencriptamos primero con la privada del cliente.
+    uint8_t expPrivCliente = clvClnt->expPrivado;
+    uint16_t modCliente = clvClnt->modulo;
+    uint32_t hashServidor = encrip.encriptar(huellaServidor, expPrivCliente, modCliente);
+    
+    //Luego desencriptamos con la publica del servidor.
+    uint8_t expPubSvr = clvSvr->expPublico;
+    uint16_t modSvr = clvSvr->modulo;
+    hashServidor = encrip.encriptar(hashServidor, expPubSvr, modSvr);
+
+    this->procesar_huellas(huellaServidor, hashServidor, hashCalculado);
+
+    //Imprimimos lo que haga la huella y los hashes
+
+    std::cout << "Huella del servidor: " << huellaServidor << "\n";
+    std::cout << "Hash del servidor: " << hashServidor << "\n";
+    std::cout << "Hash calculado: " << hashCalculado << "\n";
+
+    //Comprobamos que el hash recibido sea el calculado
+
+    if (hashServidor != hashCalculado){
+        std::cout << "Error: los hashes no coinciden.\n"
+        todoOK = proto.enviar_bytes(1,1);
+        return todoOK;
     }
 
-    //Enviamos fecha finalizacion del certificado 
-    std:string &fechaFin = info[2];
-    uint32_t largoFechaFin = fechaFin.size();
-    const char *fechaFinBuff = fechaFin.data();
-    todoOK = proto.enviar_mensaje(fechaFinBuff, largoFechaFin);
-
+    todoOK = certif.guardar();
+    if (! todoOK){
+        return false;
+    }
+    todoOK = proto.enviar_bytes(0,1);
     return todoOK;
 }
 
-bool Certificado::crear(std::string &clvsClnt, std::string &publSvr, std::string &infoCert){
+/*
+PRE: Recibe el nombre (std::string &) del archivo donde estan 
+las claves del cliente , el nombre (std::string &) del archivo 
+donde estan las claves publicas del servidor de la autoridad 
+certificante, y el nombre (std::string &) del archivo donde 
+esta la informacion para crear el certificado.
+POST: Devuelve true, si logro crear un certificado 
+correctamente, false en caso contrario.
+*/
+bool Cliente::crear_certificado(str &ifCert, str &clvsClnt, str &pblSvr){
     bool todoOK = true;
     stringVector infoVec(0);
     todoOK = this->cargar_info(infoCertif, infoVec);
@@ -185,16 +239,56 @@ bool Certificado::crear(std::string &clvsClnt, std::string &publSvr, std::string
     if (! todoOK){
         return false;
     }
-    todoOK = this->enviar_info_creacion(infoVec, claveCliente);
+    Certificado certif(clvsClnt, infoVec);
+
+    todoOK = this->solicitar_creacion(certif);
     if (! todoOk){
         return false;
     }
-    todoOK = this->recibir_certificado(claveCliente, claveServidor, infoVec);
+    todoOK = this->recibir_certificado(claveCliente, claveServidor);
+    return todoOK;
+}
+
+bool Cliente::revocar(str &nombreCertif, str &nombreClvClnt, str &nombreClvSvr){
+    bool todoOK = true;
+    Certificado certif(nombreCertif);
+    todoOK = this->cargar_info(infoCertif, infoVec);
     if (! todoOK){
         return false;
     }
-
-    
-
+    ClaveRSA claveCliente(0,0,0);
+    todoOK = claveCliente.cargar_claves(clvsClnt);
+    if (! todoOK){
+        return false;
+    }
+    ClaveRSA claveServidor(0,0,0);
+    todoOK = claveServidor.cargar_claves(publSvr);
+    if (! todoOK){
+        return false;
+    }
 }
-//Mar 28 21:33:04 2019v
+
+int main(int argc, const char* argv[]){
+    if (argc != 7){
+        std::cout << "Error: argumentos invalidos.\n";
+    }
+    str host = argv[1];
+    str puerto = argv[2];
+    Cliente cliente(host, puerto);
+    
+    str comando = argv[3];
+    str nombreCertif = argv[4];
+    str nombreClvClnt = argv[5];
+    str nombreClvSvr = argv[6];
+
+    if (comando == "new"){
+        //./client localhost 2000 new certificate.req client.keys serverPublic.keys
+        cliente.crear_certificado(nombreCertif, nombreClvClnt, nombreClvSvr);
+    } else if (comando == "revoke"){
+        //./client localhost 2000 revoke “Federico Manuel Gomez Peter.cert” client.keys serverPublic.keys
+        cliente.revocar_certificado(nombreCertif, nombreClvClnt, nombreClvSvr);
+    } else {
+        std::cout << "Error: argumentos invalidos.\n";   
+    }
+    return 0;
+}

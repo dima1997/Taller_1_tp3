@@ -128,10 +128,7 @@ class Protocolo {
     Socket &skt;
     /*
     PRE: Recibe una referencia al socket de comunicacion.
-    POST: Inicializa un protocolo de comunicacion, donde
-    los mensaje se enviar primero indicando su longitud en
-    enteros sin signo de 4 bytes big endian, y luego se 
-    envia el mensaje.
+    POST: Inicializa un protocolo de comunicacion.
     */
     Protocolo(Socket &skt);
 
@@ -147,7 +144,16 @@ class Protocolo {
     Devuelve true si logro enviar el mensaje, false en caso 
     contrario.
     */
-    bool enviar_cadena(const char *mensaje, uint32_t largo);
+    bool Protocolo::enviar_mensaje(const char *mensaje, uint32_t largo);
+
+    /*
+    PRE: Recibe una referencia a una string (std::string &).
+    POST: Devuelve el largo del mensaje recibido, si logro
+    correctamente recibir y guardar el mensaje recibido en
+    la referencia recibida.
+    Si ocurrio algun error devuelve 0;  
+    */
+    uint32_t Protocolo::recibir_mensaje(std::string &mensaje);
 
     /*
     PRE: Recibe un valor (uint32_t) y una cantidad de bytes 
@@ -161,8 +167,34 @@ class Protocolo {
     Devuelve true si logro enviar los bytes del valor,
     false en caso contrario.
     */
-    bool enviar_bytes(uint32_t valor, size_t bytes);
+    bool Protocolo::enviar_bytes(uint32_t valor, size_t bytes);
 
+    /*
+    PRE: Recibe una referencia a un entero sin signo de 1 bytes
+    (uint8_t &).
+    POST: Devuelve true si logro recibir correctamente 1 bytes
+    y guardalo en la referencia recibida; false en caso 
+    contrario.
+    */
+    bool Protocolo::recibir_un_byte(uint8_t &valor);
+
+    /*
+    PRE: Recibe una referencia a un entero sin signo de 2 bytes
+    (uint16_t &).
+    POST: Devuelve true si logro recibir correctamente 2 bytes
+    en big endian, y escribirlos en el endianess local en la
+    referencia recibida; false en caso contrario.
+    */
+    bool Protocolo::recibir_dos_bytes(uint16_t &valor);
+
+    /*
+    PRE: Recibe una referencia a un entero sin signo de 4 bytes
+    (uint32_t &).
+    POST: Devuelve true si logro recibir correctametne 4 bytes
+    en big endian, y escribirlos en el endianess local en la 
+    referencia recibida; false en caso contrario.
+    */
+    bool recibir_cuatro_bytes(uint32_t &valor);
 };
 
 
@@ -195,6 +227,25 @@ struct ClaveRSA{
     encontrados en el archivo.
     */
     cargar_claves(std::string &nombreArchivo);
+};
+
+class Certificado {
+    public:
+    uint32_t numeroSerie;
+    std::string asunto;
+    std::string sujeto;
+    std::string inicio;
+    std::string fin;
+    uint8_t exp;
+    uint16_t mod;
+
+    Certificado();
+    Certificado(ClaveRSA &clvClnt, std::vector<std::string> &info);
+    ~Certificado();
+    bool recibir(Socket &skt);
+    bool enviar(Socket &skt);
+    uint32_t hashear();
+    bool guardar();
 };
 
 #endif // COMMON_H
