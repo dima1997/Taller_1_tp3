@@ -1,7 +1,7 @@
 #define _POSIX_C_SOURCE 200112L
 #include <cstdint>
 #include <cstring>
-#include <iostream>
+#include <fstream>
 #include <string>
 #include <errno.h>
 #include <sys/types.h>
@@ -49,11 +49,12 @@ Cualquier contenido anterior en segunda string recibida queda
 borrado.  
 */
 bool cargarArchivo(std::string &nombre, std::string &contenido){
-    std::ifstream archivo.open(nombre);
+    std::ifstream archivo;
+    archivo.open(nombre);
     if (! archivo.is_open()){
         return false;
     }
-    contenido.erase(0,std::string::npos)
+    contenido.erase(0,std::string::npos);
     char caracter;
     archivo.get(caracter);
     while (archivo.good()){
@@ -71,12 +72,14 @@ que se escribira en el archivo.
 */
 bool escribirArchivo(std::string &nombre, std::string &fin, std::string &texto){
     std::string nombreArchivo = nombre + fin;
-    std::ofstream archivo.open(nombreArchivo);
-    if (! archivo.is_open){
+    std::ofstream archivo;
+    archivo.open(nombreArchivo);
+    if (! archivo.is_open()){
         return false;
     }
     archivo << texto;
     archivo.close();
+    return true;
 }
 
 //TDA Hash
@@ -140,223 +143,219 @@ uint32_t Encriptador::encriptar(uint32_t huella, uint8_t exp, uint16_t mod){
     return retorno;
 }
 
+/*
+Inicializa el socket dejandolo en un estado
+invalido hasta tanto no llamar a otros metodos del 
+socket.
+*/
+Socket::Socket(){
+    this->skt = -1;
+}
 
-//Imprimir en hexagesimal : printf("Numero hexagesimal %x", numeroEntero)
-
-//string.data() => char *
-
-    /*
-    Inicializa el socket dejandolo en un estado
-    invalido hasta tanto no llamar a otros metodos del 
-    socket.
-    */
-    Socket::Socket(){
-        this->skt = -1;
+/*Destruye un socket.*/
+Socket::~Socket(){
+    if (this->skt != -1){
+        shutdown(this->skt, SHUT_RDWR);
+        close(this->skt);
     }
+}
 
-    /*Destruye un socket.*/
-    Socket::~Socket(){
-        if (this->skt != -1){
-            shutdown(this->skt, SHUT_RDWR);
-            close(this->skt);
-        }
+/*
+Metodo para cliente.
+PRE: Recibe los nombres (const char*) del host y 
+puerto al que se desea conectar el socket.
+POST: Devuelve true si logro conectarse al host y puerto;
+false en caso contrario.
+*/
+bool Socket::conectar(const char *host, const char *puerto){
+    int estado = 0;
+    bool estamosConectados = false;
+    struct addrinfo hints;
+    struct addrinfo *direcciones, *sig; //siguiente
+    this->skt = 0;
+    memset(&hints, 0, sizeof(struct addrinfo));
+    hints.ai_family = AF_INET; // IPv4
+    hints.ai_socktype = SOCK_STREAM; //TCP
+    hints.ai_flags = 0;
+    estado = getaddrinfo(host, puerto, &hints, &direcciones);
+    if (estado != 0) {
+        printf("Error in getaddrinfo: %s\n", gai_strerror(estado));
+        return false;
     }
-
-    /*
-    Metodo para cliente.
-    PRE: Recibe los nombres (const char*) del host y 
-    puerto al que se desea conectar el socket.
-    */
-    bool Socket::conectar(const char *host, const char *puerto){
-        int estado = 0;
-        bool estamosConectados = false;
-        struct addrinfo hints;
-        struct addrinfo *direcciones, *sig; //siguiente
-        this->skt = 0;
-        memset(&hints, 0, sizeof(struct addrinfo));
-        hints.ai_family = AF_INET; // IPv4
-        hints.ai_socktype = SOCK_STREAM; //TCP
-        hints.ai_flags = 0;
-        estado = getaddrinfo(host, puerto, &hints, &direcciones);
-        if (estado != 0) {
-            printf("Error in getaddrinfo: %s\n", gai_strerror(estado));
-            return false;
-        }
-        sig = direcciones;
-        while (sig != NULL) {
-            this->skt = socket(sig->ai_family, sig->ai_socktype, sig->ai_protocol);
-            if (this->skt == -1) {
-                printf("Error: %s\n", std::strerror(errno));
-            } else {
-                estado = connect(this->skt, sig->ai_addr, sig->ai_addrlen);
-                if (estado == -1) {
-                    printf("Error: %s\n", std::strerror(errno));
-                    close(this->skt);
-                }
-                estamosConectados = (estado != -1);
-            }
-            sig = sig->ai_next;
-        }
-        freeaddrinfo(direcciones);
-        return estamosConectados;
-    }
-
-    /*
-    Metodo para Servidor.
-    PRE: Recibe un socket (skt_t *) ya creado, y el
-    nombre (char *) de un puerto al cual enlazarlo.
-    POST: Configura al socket para que funcion de 
-    forma PASIVA, es decir, se lo enlaza al puerto de
-    nombre recibido. 
-    Devuelve true, si logro lo anterior, false en caso
-    contrario.
-    */
-    bool Socket::enlazar(const char *puerto){
-        int estado = 0;
-        struct addrinfo hints;
-        struct addrinfo *direccion;
-        memset(&hints, 0, sizeof(struct addrinfo));
-        hints.ai_family = AF_INET; // IPv4
-        hints.ai_socktype = SOCK_STREAM; //TCP
-        hints.ai_flags = AI_PASSIVE; //AI_PASSIVE para servidor
-        estado = getaddrinfo(NULL, puerto, &hints, &direccion);
-        if (estado != 0) { 
-            printf("Error in getaddrinfo: %s\n", gai_strerror(estado));
-            return false;
-        }
-        struct addrinfo *dir = direccion;
-        this->skt = socket(dir->ai_family, dir->ai_socktype, dir->ai_protocol);
+    sig = direcciones;
+    while (sig != NULL) {
+        this->skt = socket(sig->ai_family, sig->ai_socktype, sig->ai_protocol);
         if (this->skt == -1) {
             printf("Error: %s\n", std::strerror(errno));
-            freeaddrinfo(direccion);
-            return false;
+        } else {
+            estado = connect(this->skt, sig->ai_addr, sig->ai_addrlen);
+            if (estado == -1) {
+                printf("Error: %s\n", std::strerror(errno));
+                close(this->skt);
+            }
+            estamosConectados = (estado != -1);
         }
-        // Evita que le servidor falle al abrirlo y cerrarlo en poco tiempo
-        int val = 1;
-        estado = setsockopt(this->skt, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val));
-        if (estado == -1) {
-            printf("Error: %s\n", std::strerror(errno));
-            close(this->skt);
-            freeaddrinfo(direccion);
-            return false;
-        }
-        estado = bind(this->skt, dir->ai_addr, dir->ai_addrlen);
+        sig = sig->ai_next;
+    }
+    freeaddrinfo(direcciones);
+    return estamosConectados;
+}
+
+/*
+Metodo para Servidor.
+PRE: Recibe un socket (skt_t *) ya creado, y el
+nombre (char *) de un puerto al cual enlazarlo.
+POST: Configura al socket para que funcion de 
+forma PASIVA, es decir, se lo enlaza al puerto de
+nombre recibido. 
+Devuelve true, si logro lo anterior, false en caso
+contrario.
+*/
+bool Socket::enlazar(const char *puerto){
+    int estado = 0;
+    struct addrinfo hints;
+    struct addrinfo *direccion;
+    memset(&hints, 0, sizeof(struct addrinfo));
+    hints.ai_family = AF_INET; // IPv4
+    hints.ai_socktype = SOCK_STREAM; //TCP
+    hints.ai_flags = AI_PASSIVE; //AI_PASSIVE para servidor
+    estado = getaddrinfo(NULL, puerto, &hints, &direccion);
+    if (estado != 0) { 
+        printf("Error in getaddrinfo: %s\n", gai_strerror(estado));
+        return false;
+    }
+    struct addrinfo *dir = direccion;
+    this->skt = socket(dir->ai_family, dir->ai_socktype, dir->ai_protocol);
+    if (this->skt == -1) {
+        printf("Error: %s\n", std::strerror(errno));
         freeaddrinfo(direccion);
-        if (estado == -1) {
-            printf("Error: %s\n", std::strerror(errno));
-            close(this->skt);
-            return false;
-        }
-        return true;
+        return false;
     }
+    // Evita que le servidor falle al abrirlo y cerrarlo en poco tiempo
+    int val = 1;
+    estado = setsockopt(this->skt, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val));
+    if (estado == -1) {
+        printf("Error: %s\n", std::strerror(errno));
+        close(this->skt);
+        freeaddrinfo(direccion);
+        return false;
+    }
+    estado = bind(this->skt, dir->ai_addr, dir->ai_addrlen);
+    freeaddrinfo(direccion);
+    if (estado == -1) {
+        printf("Error: %s\n", std::strerror(errno));
+        close(this->skt);
+        return false;
+    }
+    return true;
+}
 
-    /*
-    Metodo para Servidor.
-    PRE: Recibe la cantidad de sockets entrantes a escuchar.
-    El socket ya esta enlazado a algun puerto.
-    POST: Pone a escuchar la cantidad de recibida de sockets 
-    entrantes.
-    Devuelve true, si logro lo anterior, false en caso contrario.
-    */
-    bool Socket::escuchar(size_t cuantosEscuchar){
-        int estado = listen(this->skt, cuantosEscuchar);
-        if (estado == -1) {
-            printf("Error: %s\n", std::strerror(errno));
-            close(this->skt);
-            return false;
-        }
-        return true;  
+/*
+Metodo para Servidor.
+PRE: Recibe la cantidad de sockets entrantes a escuchar.
+El socket ya esta enlazado a algun puerto.
+POST: Pone a escuchar la cantidad de recibida de sockets 
+entrantes.
+Devuelve true, si logro lo anterior, false en caso contrario.
+*/
+bool Socket::escuchar(size_t cuantosEscuchar){
+    int estado = listen(this->skt, cuantosEscuchar);
+    if (estado == -1) {
+        printf("Error: %s\n", std::strerror(errno));
+        close(this->skt);
+        return false;
     }
+    return true;  
+}
 
-    /*
-    Metodo para Servidor.
-    PRE: Recibe un socket (Socket &) para ser configurado como 
-    ACTIVO. 
-    POST: Devuelve true si logro aceptar una nueva comunicacion y
-    configurar al socket ACTIVO para la misma, o false en caso 
-    contrario. 
-    */
-    bool Socket::aceptar(Socket &sktActivo){
-        sktActivo.skt = accept(this->skt, NULL, NULL);
-        if (sktActivo.skt == -1) {
-            printf("Error: %s\n", std::strerror(errno));
-            return false;
-        }
-        return true; 
+/*
+Metodo para Servidor.
+PRE: Recibe un socket (Socket &) para ser configurado como 
+ACTIVO. 
+POST: Devuelve true si logro aceptar una nueva comunicacion y
+configurar al socket ACTIVO para la misma, o false en caso 
+contrario. 
+*/
+bool Socket::aceptar(Socket &sktActivo){
+    sktActivo.skt = accept(this->skt, NULL, NULL);
+    if (sktActivo.skt == -1) {
+        printf("Error: %s\n", std::strerror(errno));
+        return false;
     }
+    return true; 
+}
     
-    /*
-    PRE: Recibe el modo en que se desea cerrar al socket:
-    SHUT_RD, SHUT_WR, SHUT_RDWR
-    POST: Cierra el socket. 
-    */
-    void Socket::cerrar_canal(int modoCierre){
-        shutdown(this->skt, modoCierre);
-    }
+/*
+PRE: Recibe el modo en que se desea cerrar al socket:
+SHUT_RD, SHUT_WR, SHUT_RDWR
+POST: Cierra el socket. 
+*/
+void Socket::cerrar_canal(int modoCierre){
+    shutdown(this->skt, modoCierre);
+}
     
-    /*
-    PRE: Recibe un socket ya conectado (skt_t*), un 
-    mensaje a enviar, y su longitud.
-    POST: Devuelve true si logro enviar todo el mensaje, 
-    false en caso contrario, dado algun error.
-    */
-    bool Socket::enviar_todo(const void *msj, size_t largo){
-        int largoMsj = largo;
-        int estado = 0;
-        int bytesEnviados = 0;
-        bool hayError = false; //todoOK = true;
-        while (largoMsj > bytesEnviados && ! hayError){
-            int i = bytesEnviados;
-            int largoMaximo = largoMsj - bytesEnviados;
-            estado = send(this->skt, &msj[i], largoMaximo, MSG_NOSIGNAL);
-            if (estado < 0) {
-                printf("Error: %s\n", std::strerror(errno));
-                hayError = true; //todoOK = false;
-            } else if (estado == 0) {
-                printf("Error: el canal de escritura fue cerrado\n");
-                hayError = true; //todoOK = false;
-            } else {
-                bytesEnviados = estado;
-            }
+/*
+PRE: Recibe un socket ya conectado (skt_t*), un 
+mensaje a enviar, y su longitud.
+POST: Devuelve true si logro enviar todo el mensaje, 
+false en caso contrario, dado algun error.
+*/
+bool Socket::enviar_todo(const char *msj, size_t largo){
+    int largoMsj = largo;
+    int estado = 0;
+    int bytesEnviados = 0;
+    bool hayError = false; //todoOK = true;
+    while (largoMsj > bytesEnviados && ! hayError){
+        int i = bytesEnviados;
+        int largoMaximo = largoMsj - bytesEnviados;
+        estado = send(this->skt, &msj[i], largoMaximo, MSG_NOSIGNAL);
+        if (estado < 0) {
+            printf("Error: %s\n", std::strerror(errno));
+            hayError = true; //todoOK = false;
+        } else if (estado == 0) {
+            printf("Error: el canal de escritura fue cerrado\n");
+            hayError = true; //todoOK = false;
+        } else {
+            bytesEnviados = estado;
         }
-        return ! hayError; //todoOK
     }
+    return ! hayError; //todoOK
+}
 
-    /*
-    PRE: Recibe un buffer (string &) donde guardar los 
-    bytes recibidos y el largo a llenar (int) del mismo.
-    POST: Devuelve la cantidad de bytes recibidos.
-    Si esta cantidad es negativa, entonces significa 
-    que hubo algun error de socket. Si la cantidad es 
-    igual a cero, significa que ya no queda nada mas 
-    que recibir.
-    */
-    int Socket::recibir_algo(void *buffer, size_t largo){
-        int largoBuff = largo;
-        int estado = 0;
-        bool hayError = false; //todoOK = true;
-        bool seguirRecibiendo = true;
-        int bytesRecibidos = 0;
-        while (largoBuff > bytesRecibidos && ! hayError && seguirRecibiendo) { //&& todoOK
-            size_t i = bytesRecibidos;
-            size_t largoMaximo = largoBuff - bytesRecibidos; 
-            estado = recv(this->skt, &buffer[i], largoMaximo-1, MSG_NOSIGNAL);
-            if (estado < 0) {
-                printf("Error: %s\n", std::strerror(errno));
-                hayError = true; //todoOK = false;
-            } else if (estado == 0) {
-                seguirRecibiendo = false; //todoOK = false;
-            } else {
-                bytesRecibidos += estado; 
-                buffer[bytesRecibidos] = 0;
-            }
+/*
+PRE: Recibe un buffer (string &) donde guardar los 
+bytes recibidos y el largo a llenar (int) del mismo.
+POST: Devuelve la cantidad de bytes recibidos.
+Si esta cantidad es negativa, entonces significa 
+que hubo algun error de socket. Si la cantidad es 
+igual a cero, significa que ya no queda nada mas 
+que recibir.
+*/
+int Socket::recibir_algo(char *buffer, size_t largo){
+    int largoBuff = largo;
+    int estado = 0;
+    bool hayError = false; //todoOK = true;
+    bool seguirRecibiendo = true;
+    int bytesRecibidos = 0;
+    while (largoBuff > bytesRecibidos && ! hayError && seguirRecibiendo) { //&& todoOK
+        size_t i = bytesRecibidos;
+        size_t largoMaximo = largoBuff - bytesRecibidos; 
+        estado = recv(this->skt, &buffer[i], largoMaximo-1, MSG_NOSIGNAL);
+        if (estado < 0) {
+            printf("Error: %s\n", std::strerror(errno));
+            hayError = true; //todoOK = false;
+        } else if (estado == 0) {
+            seguirRecibiendo = false; //todoOK = false;
+        } else {
+            bytesRecibidos += estado; 
+            buffer[bytesRecibidos] = 0;
         }
-        if (hayError) { //! todoOK
-            return -1;
-        }
-        return bytesRecibidos;
     }
-
+    if (hayError) { //! todoOK
+        return -1;
+    }
+    return bytesRecibidos;
+}
 
 /*
 PRE: REcibe un exponente publico: entero sin 
@@ -366,7 +365,7 @@ signo de 1 bytes (uint8_t) y de un modulo:
 entero sin signo de 2 bytes (uint16_t). 
 POST: Crea una clave rsa.
 */
-Clave::ClaveRSA(uint8_t expPublico, uint8_t expPrivado, uint16_t modulo)
+ClaveRSA::ClaveRSA(uint8_t expPublico, uint8_t expPrivado, uint16_t modulo)
 : expPublico(expPublico), expPrivado(expPrivado), modulo(modulo){}
 
 /*Destruye la clave rsa*/
@@ -380,6 +379,7 @@ o
 <exponente-publico> <modulo>
 POST: Actualiza los valores de la claves rsa, con los 
 encontrados en el archivo.
+Devuelve true si logro lo anterior, false en caso contrario.
 */
 bool ClaveRSA::cargar_claves(std::string &nombreArchivo){
     std::string todasClaves = 0;
@@ -388,8 +388,9 @@ bool ClaveRSA::cargar_claves(std::string &nombreArchivo){
     if (! todoOK){
         return false;
     }
-    std::std::vector<std::string> partesClaves;
-    split(todasClaves, " ", partesClaves);
+    std::vector<std::string> partesClaves(0);
+    std::string separador = " ";
+    split(todasClaves, separador, partesClaves);
     this->expPublico = atoi(partesClaves[0].data());
     if (partesClaves.size() < 3){
         this->modulo = atoi(partesClaves[1].data());
@@ -398,6 +399,26 @@ bool ClaveRSA::cargar_claves(std::string &nombreArchivo){
         this->modulo = atoi(partesClaves[2].data());
     }
     return true;
+}
+
+/*
+PRE: Recibe un valor entero sin signo de 4 bytes
+POST: Devuelve una huella (uint32_t) del valor recibido
+encriptado con el exponente publico.
+*/
+uint32_t ClaveRSA::encriptar_publico(uint32_t valor){
+    Encriptador encrip;
+    return encrip.encriptar(valor, this->expPublico, this->modulo);
+}
+
+/*
+PRE: Recibe un valor entero sin signo de 4 bytes
+POST: Devuelve una huella (uint32_t) del valor recibido
+encriptado con el exponente privado.
+*/
+uint32_t ClaveRSA::encriptar_privado(uint32_t valor){
+    Encriptador encrip;
+    return encrip.encriptar(valor, this->expPrivado, this->modulo);
 }
 
 /*
@@ -410,9 +431,7 @@ Protocolo::Protocolo(Socket &skt) : skt(skt) {}
 Protocolo::~Protocolo(){}
 
 /*
-PRE: Recibe el largo/cantidad de bytes (uint32_t) 
-de un mensaje a enviar. 
-y el mensaje a enviar (const void *).
+PRE: Un mensaje a enviar (std::string &).
 POST: Envia el mensaje, primero enviando la longitud
 del mismo, seguido del mensaje.
 Devuelve true si logro enviar el mensaje, false en caso 
@@ -448,7 +467,7 @@ uint32_t Protocolo::recibir_mensaje(std::string &mensaje){
     }
     char *buffer = new char[largoMensaje];
     int bytesRecibidos = this->skt.recibir_algo(buffer, largoMensaje);
-    if (bytesRecibidos != largoMensaje){
+    if (bytesRecibidos != (int)largoMensaje){
         delete buffer;
         return 0;
     }
@@ -474,12 +493,12 @@ bool Protocolo::enviar_bytes(uint32_t valor, size_t bytes){
     if (bytes == 1){
         uint8_t valorEnviar = (valor & 0x000000FF);
         char *buffer = (char *) &valorEnviar;
-        todoOK = this->skt.enviar_todo(&valorEnviar, 1);
+        todoOK = this->skt.enviar_todo(buffer, 1);
     }
     if (bytes == 2){
         uint16_t valorEnviar = (valor & 0x0000FFFF);
         uint16_t valorEnviarBE = htobe16(valorEnviar);
-        char *buffer = (char*) &valorEnviarBE
+        char *buffer = (char*) &valorEnviarBE;
 
         todoOK = this->skt.enviar_todo(buffer, 2); 
     }
@@ -500,12 +519,14 @@ y guardalo en la referencia recibida; false en caso
 contrario.
 */
 bool Protocolo::recibir_un_byte(uint8_t &valor){
-    char buffer[1];
-    int bytesRecibidos = this->skt.recibir_algo(buffer, 1);
+    //char buffer[1];
+    uint8_t valorRecibido = 0;
+    int bytesRecibidos = this->skt.recibir_algo((char*)&valorRecibido, 1);
     if (bytesRecibidos != 1){
         return false;
     }
-    valor = *(uint8_t*)buffer;
+    valor = valorRecibido;
+    //valor = *(uint8_t*)buffer;
     return true;
 }
 
@@ -517,13 +538,13 @@ en big endian, y escribirlos en el endianess local en la
 referencia recibida; false en caso contrario.
 */
 bool Protocolo::recibir_dos_bytes(uint16_t &valor){
-    char buffer[2];
-    int bytesRecibidos = this->skt.recibir_algo(buffer, 2);
+    uint16_t valorBE = 0;
+    int bytesRecibidos = this->skt.recibir_algo((char*)&valorBE, 2);
     if (bytesRecibidos != 2){
         return false;
     }
-    uint16_t valorBE = *(uint16_t*)buffer;
-    valor = betoh(valorBE);
+    //uint16_t valorBE = *(uint16_t*) buffer;
+    valor = be16toh(valorBE);
     return true;
 }
 
@@ -535,18 +556,19 @@ en big endian, y escribirlos en el endianess local en la
 referencia recibida; false en caso contrario.
 */
 bool Protocolo::recibir_cuatro_bytes(uint32_t &valor){
-    char buffer[2];
-    int bytesRecibidos = this->skt.recibir_algo(buffer, 2);
+    //char buffer[2];
+    uint16_t valorBE = 0;
+    int bytesRecibidos = this->skt.recibir_algo((char*)&valorBE, 2);
     if (bytesRecibidos != 2){
         return false;
     }
-    uint16_t valorBE = *(uint16_t*)buffer;
-    valor = betoh(valorBE);
+    //uint16_t valorBE = *(uint16_t*)buffer;
+    valor = be32toh(valorBE);
     return true;
 }
 
 std::string a_hexa32_string(uint32_t &valor){
-    char buffer[11] //+0x + 8 letras +\0
+    char buffer[11]; //+0x + 8 letras +\0
     size_t largo = sizeof(buffer);
     snprintf(buffer, largo, "0x%08x", valor);
     return std::string(buffer);
@@ -578,28 +600,6 @@ Certificado::Certificado(){
 }
 
 /*
-PRE: Recibe el nombre (std::string &) a un archivo que
-tiene un certificado ya creado.
-POST: Carga el certificado con la informacion del 
-archivo.
-Devuelve true si logro lo anterior, false en caso 
-contrario.
-*/
-/*
-bool Certificado::cargar(std::string &nombreArchivo){
-    ifstream archCertif.open(nombreArchivo);
-    if (! archCertif.is_open()){
-        return false;
-    }
-    std::string linea = 0;
-    std::getline(linea, );
-    while (archCertif.is_good()){
-        std::vector<std::string> lineaSplit(0);
-        split(linea, "\t", lineaSplit);
-    }
-}
-*/
-/*
 PRE: Recibe las claves publicas del cliente (ClaveRSA &, con los 
 expPublico y modulo correctos), y un vector de strings con informacion
 de el sujeto del certificado, la fecha de inicio, y de final 
@@ -608,27 +608,150 @@ POST: Inicializa un certificado con dicha informacion.
 */
 Certificado::Certificado(ClaveRSA &clvClnt, std::vector<std::string> &info){
     this->numeroSerie = 0;
-    this->asunto = ""
+    this->asunto = "";
     this->sujeto = info[0];
     this->inicio = info[1];
     this->fin = info[2];
-    this->exp = clvClnt->expPublico;
-    this->mod = clvClnt->mod;
+    this->exp = clvClnt.expPublico;
+    this->mod = clvClnt.modulo;
 }
 
 /*Destruye un certificado*/
 Certificado::~Certificado(){}
 
 /*
-PRE: Recibe un socket conectado con otro socket.
+PRE: Recibe una referencia a una linea (std::string &)
+de un archivo que contiene un certificado.
+POST: Procesa la linea guardando informacion de ella
+segun corresponda, para modelizar el certificado del
+archivo en la clase actual.
+*/
+void Certificado::_procesar_linea(std::string &linea){
+    size_t pos = 0;
+    std::string lineaSinTabs = linea; 
+    while ((pos = linea.find('\t')) != std::string::npos) {
+        lineaSinTabs = lineaSinTabs.substr(pos+1);
+    }
+    std::vector<std::string> lineaSplit(0);
+    std::string separador = ": ";
+    split(lineaSinTabs, separador, lineaSplit);
+    if (lineaSplit.size() < 2){
+        return;
+    }
+    std::string campo = lineaSplit[0];
+    std::string valor = lineaSplit[1];
+    if (campo == "serial number"){
+        this->numeroSerie = (uint32_t) atoi(valor.data());
+        return;
+    }
+    if (campo == "issuer"){
+        this->asunto = valor;
+        return;
+    }
+    if (campo == "subject"){
+        this->sujeto = valor;
+        return;
+    }
+    if (campo == "not before"){
+        this->inicio = valor;
+        return;
+    }
+    if (campo == "not after"){
+        this->fin = valor;
+        return;
+    }
+    if (campo == "modulus"){
+        std::vector<std::string> modulo(0);
+        separador = " ";
+        split(valor, separador, modulo);
+        this->mod = (uint16_t) atoi(modulo[0].data());
+        return;
+    }
+    if (campo == "exponent"){
+        std::vector<std::string> exponente(0);
+        separador = " ";
+        split(valor, separador, exponente);
+        this->exp = (uint8_t) atoi(exponente[0].data());
+        return;
+    }
+    //Cualquier otra cosa la ignoramos
+    //Suponemos que el certificado no va a tener errores.
+    return;
+
+}   
+
+/*
+PRE: Recibe el nombre (std::string &) a un archivo que
+tiene un certificado ya creado.
+POST: Carga el certificado con la informacion del 
+archivo.
+Devuelve true si logro lo anterior, false en caso 
+contrario.
+*/
+bool Certificado::cargar(std::string &nombreArchivo){
+    std::ifstream archCertif;
+    archCertif.open(nombreArchivo);
+    if (! archCertif.is_open()){
+        return false;
+    }
+    std::string linea = 0;
+    std::getline(archCertif, linea);
+    while (archCertif.good()){
+        this->_procesar_linea(linea);
+        std::getline(archCertif, linea);
+    }
+    return true;
+}
+
+/*
+Crea un archivo <sujeto>.cert y guarda en el certificado actual.
+*/
+bool Certificado::guardar(){ //Sobrecargar << , en esta clase o en una clase Archivo
+    std::string certificado = 0;
+    this->a_string(certificado);
+    std::string terminacion = ".cert";
+    return escribirArchivo(this->sujeto, terminacion, certificado);
+}
+
+/*
+PRE: Recibe una referencia a una string (std::string &).
+POST: Copia en la referencia la representacion del certificado 
+actual.
+*/
+void Certificado::a_string(std::string &cadena){
+    std::string certificado = "certificate:\n";
+    certificado += "\tserial number: " + this->numeroSerie; 
+    certificado += a_hexa32_string(this->numeroSerie) + "\n"; 
+    certificado += "\tsubject: " + this->sujeto + "\n";
+    certificado += "\tissuer: " + this->asunto + "\n"; //Taller de programacion 1
+    certificado += "\t​validity:​\n";
+    certificado += "\t\tnot before: " + this->inicio + "\n";
+    certificado += "\t\tnot after: " + this->fin + "\n";
+    certificado += "\tsubject public key info:\n";
+    certificado += "\t\tmodulus: " + std::to_string(this->mod);
+    certificado += a_hexa16_string(this->mod) + "\n"; 
+    certificado += "\t\texponent: " + std::to_string(this->exp); 
+    certificado += a_hexa8_string(this->exp) + "\n"; 
+    cadena = certificado;
+}
+
+/*Devuelve el hash (uint32_t) de certificado actual*/
+uint32_t Certificado::hashear(){
+    std::string certificado = 0;
+    this->a_string(certificado);
+    Hash hash;
+    return hash.hashear(certificado, certificado.size());
+}
+
+/*
+PRE: Recibe un protocolo (Protocolo &) ya creadp.
 POST: Recibe y almacena la informacion de un 
 certificado en el orden en que el metodo enviar
-la envia.
+la envia, a traves del protocolo
 Devuelve true, si logro lo anterior con exito,
 false en caso contrario.
 */
-bool recibir(Socket &skt){
-    Protocolo proto(skt);
+bool Certificado::recibir(Protocolo &proto){
     uint32_t bytesRecibidos = 0;
     bool todoOK = true;
     todoOK = proto.recibir_cuatro_bytes(this->numeroSerie);
@@ -662,8 +785,13 @@ bool recibir(Socket &skt){
     return proto.recibir_un_byte(this->exp);
 }
 
-bool Certificado::enviar(Socket &skt){
-    Protocolo proto(skt);
+/*
+PRE: Recibe un protocolo (Protocolo &) ya creado.
+POST: Envia cada campo del certificado en el orden que 
+aparecen de arriba hacia abajo un su representacion.,
+a traves del protocolo recibido.
+*/
+bool Certificado::enviar(Protocolo &proto){
     bool todoOK = true;
     todoOK = proto.enviar_bytes(this->numeroSerie, 4);
     if (! todoOK){
@@ -698,7 +826,8 @@ bool Certificado::enviar(Socket &skt){
 }
 
 /*
-PRE: Recibe un socket conectado con un cliente que 
+PRE: Recibe un protocolo (Protocolo &) creado 
+para recibir informacion de un cliente que 
 desee crear un certificado.
 POST: Recibe los parametros para crear el certificado
 en el orden que los envia el metodo enviar_parametros.
@@ -706,18 +835,17 @@ Devuelve true si logro recibir y guardar en si mismo
 todos estos parametros recibidos; false en caso 
 contrario.
 */
-bool Certificado::recibir_parametros(Socket &skt){
-    Protocolo proto(this->skt);
+bool Certificado::recibir_parametros(Protocolo &proto){
     bool todoOK = true;
     uint32_t bytesRecibidos = 0;
     //Recibimos el subject
-    bytesRecibidos = proto.recibir_mensaje(this->subject);
+    bytesRecibidos = proto.recibir_mensaje(this->sujeto);
     if (bytesRecibidos == 0){
         return false;
     }
 
     //Recibimos modulo
-    todoOK = proto.recibir_dos_bytes(this->modulo);
+    todoOK = proto.recibir_dos_bytes(this->mod);
     if (! todoOK){
         return false;
     }
@@ -741,16 +869,15 @@ bool Certificado::recibir_parametros(Socket &skt){
 }
 
 /*
-PRE: Recibe un socket conectado con el servidor de 
-una autoridad certificante.
+PRE: Recibe un protocolo (Protocolo &) creado 
+para enviar informacion una autoridad certificante.
 POST: Envia los parametros que la autoridad necesita
 del certificado actual para certificarlo, en el orden
 que la autoridad certificante los espera.
 Devuelve true si logro lo anterior; false en caso
 contrario. 
 */
-bool Certificado::enviar_parametros(Socket &skt){
-    Protocolo proto(this->skt);
+bool Certificado::enviar_parametros(Protocolo &proto){
     bool todoOK = true;
 
     //Enviamos el subject
@@ -760,7 +887,7 @@ bool Certificado::enviar_parametros(Socket &skt){
     }
 
     ///Enviamos el modulo del cliente
-    todoOK = proto.enviar_bytes(this->modulo, 2);
+    todoOK = proto.enviar_bytes(this->mod, 2);
     //2 bytes
     if (!todoOK) {
         return false;
@@ -782,43 +909,4 @@ bool Certificado::enviar_parametros(Socket &skt){
     todoOK = proto.enviar_mensaje(this->fin);
 
     return todoOK;
-}
-
-/*
-PRE: Recibe una referencia a una string (std::string &).
-POST: Copia en la referencia la representacion del certificado 
-actual.
-*/
-void a_string(std::string &cadena){
-    std::string certificado = "certificate:\n";
-    certificado += "\tserial number: " + this->numeroSerie; 
-    certificado += a_hexa32_string(this->numeroSerie) + "\n"; 
-    certificado += "\tsubject: " + this->sujeto + "\n";
-    certificado += "\tissuer: " + this->asunto + "\n"; //Taller de programacion 1
-    certificado += "\t​validity:​\n";
-    certificado += "\t\tnot before: " + this->inicio + "\n";
-    certificado += "\t\tnot after: " + this->fin + "\n";
-    certificado += "\tsubject public key info:\n";
-    certificado += "\t\tmodulus: " + std::string(this->mod);
-    certificado += a_hexa16_string(this->mod) + "\n"; 
-    certificado += "\t\texponent: " + std::string(this->exp); 
-    certificado += a_hexa8_string(this->exp) + "\n"; 
-    cadena = certificado;
-}
-
-/*Devuelve el hash de certificado actual*/
-uint32_t hashear(){
-    std::string certificado = 0;
-    this->a_string(certificado);
-    Hash hash;
-    return hash.hashear(certificado, certificado.size());
-}
-
-/*
-Crea un archivo <sujeto>.cert y guarda en el certificado actual.
-*/
-bool guardar(){
-    std::string certificado = 0;
-    this->a_string(certificado);
-    return escribirArchivo(this->subject, ".cert", certificado);
 }
