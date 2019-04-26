@@ -1,6 +1,7 @@
 #ifndef HASH_H
 #define HASH_H
 #include <cstdint>
+#include <string>
 
 class Hash {
     public:

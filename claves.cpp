@@ -1,5 +1,7 @@
+#include <vector>
 #include "hash.h"
 #include "claves.h"
+#include "spliter.h"
 
 /*Crea una clave por default, con todos sus atributos nulos.*/
 ClaveRSA::ClaveRSA() : expPublico(0), expPrivado(0), modulo(0){}
@@ -76,6 +78,29 @@ ClaveRSA& ClaveRSA::operator=(ClaveRSA&& otraClave){
 }
 
 /*
+Devuelve una representacion (std::string) de la clave de la forma
+"<exponente publico> <exponente privado> <modulo>"
+*/
+std::string ClaveRSA::a_string() const{
+    std::string representacion;
+    representacion += std::to_string(this->expPublico) + " ";
+    representacion += std::to_string(this->expPrivado) + " ";
+    representacion += std::to_string(this->modulo);
+    return std::move(representacion);
+}
+
+/*
+Devuelve una representacion (std::string) de la clave publica de 
+la forma: "<exponente publico> <modulo>"
+*/
+std::string ClaveRSA::a_string_publica() const{
+    std::string representacion;
+    representacion += std::to_string(this->expPublico) + " ";
+    representacion += std::to_string(this->modulo);
+    return std::move(representacion);
+}
+
+/*
 PRE: Recibe el nombre de un archivo que contiene las claves
 publicas y/o privadas de una entidad, de la forma:
 <exponente-publico> <exponente-privado> <modulo>
@@ -85,6 +110,7 @@ POST: Actualiza los valores de la claves rsa, con los
 encontrados en el archivo.
 Devuelve true si logro lo anterior, false en caso contrario.
 */
+/*
 bool ClaveRSA::cargar_claves(std::string &nombreArchivo){
     std::string todasClaves = 0;
     bool todoOK = true;
@@ -103,6 +129,32 @@ bool ClaveRSA::cargar_claves(std::string &nombreArchivo){
         this->modulo = atoi(partesClaves[2].data());
     }
     return true;
+}
+*/
+
+/*
+PRE: Recibe una cadena de caracteres (std::string &) que 
+contiene las claves publicas y/o privadas de una entidad, 
+de la forma:
+<exponente-publico> <exponente-privado> <modulo>
+o
+<exponente-publico> <modulo>
+POST: Actualiza los valores de la claves rsa, con los 
+encontrados en el archivo. En el segundo caso, el exponente 
+privado se actualiza a valor nulo.
+*/
+void ClaveRSA::actualizar(std::string &claveCadena){
+    std::vector<std::string> partesClave;
+    std::string separador = " ";
+    Spliter spliter;
+    partesClave = spliter.split(claveCadena, separador);
+    this->expPublico = atoi(partesClave[0].data());
+    if (partesClave.size() < 3){
+        this->modulo = atoi(partesClave[1].data());
+    } else {
+        this->expPrivado = atoi(partesClave[1].data());
+        this->modulo = atoi(partesClave[2].data());
+    }
 }
 
 /*

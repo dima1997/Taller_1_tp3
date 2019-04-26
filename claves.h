@@ -1,6 +1,7 @@
 #ifndef CLAVES_H
 #define CLAVES_H
 #include <cstdint>
+#include <string>
 
 struct ClaveRSA{
     public:
@@ -71,7 +72,32 @@ struct ClaveRSA{
     encontrados en el archivo.
     Devuelve true si logro lo anterior, false en caso contrario.
     */
-    bool cargar_claves(std::string &nombreArchivo);
+    //bool cargar_claves(std::string &nombreArchivo);
+
+    /*
+    PRE: Recibe una cadena de caracteres (std::string &) que 
+    contiene las claves publicas y/o privadas de una entidad, 
+    de la forma:
+    <exponente-publico> <exponente-privado> <modulo>
+    o
+    <exponente-publico> <modulo>
+    POST: Actualiza los valores de la claves rsa, con los 
+    encontrados en el archivo. En el segundo caso, el exponente 
+    privado se actualiza a valor nulo.
+    */
+    void actualizar(std::string &claveCadena);
+
+    /*
+    Devuelve una representacion (std::string) de la clave de la forma
+    "<exponente publico> <exponente privado> <modulo>"
+    */
+    std::string a_string() const;
+
+    /*
+    Devuelve una representacion (std::string) de la clave publica de 
+    la forma: "<exponente publico> <modulo>"
+    */
+    std::string a_string_publica() const;
 
     /*
     PRE: Recibe un valor entero sin signo de 4 bytes
