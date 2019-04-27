@@ -13,14 +13,14 @@ PRE: Recibe un entero sin signo de 4 bytes.
 POST: Devuelve una representacion (std::string) 
 hexagesimal del valor recibido.
 */
-std::string a_hexa32_string(uint32_t &valor);
+std::string a_hexa32_string(const uint32_t &valor);
 
 /*
 PRE: Recibe un entero sin signo de 2 bytes.
 POST: Devuelve una representacion (std::string) 
 hexagesimal del valor recibido.
 */
-std::string a_hexa16_string(uint16_t &valor);
+std::string a_hexa16_string(const uint16_t &valor);
 
 
 /*
@@ -28,7 +28,7 @@ PRE: Recibe un entero sin signo de 1 bytes.
 POST: Devuelve una representacion (std::string) 
 hexagesimal del valor recibido.
 */
-std::string a_hexa8_string(uint8_t &valor);
+std::string a_hexa8_string(const uint8_t &valor);
 
 class Certificado {
     public:
@@ -56,35 +56,22 @@ class Certificado {
     ~Certificado();
 
     /*
-    PRE: Recibe una referencia a una linea (std::string &)
-    de un archivo que contiene un certificado.
-    POST: Procesa la linea guardando informacion de ella
-    segun corresponda, para modelizar el certificado del
-    archivo en la clase actual.
+    PRE: Recibe un numero serie (uint32_t).
+    POST Setea en el certificaod el numero de serie recibido.
     */
-    void _procesar_linea(std::string &linea);
+    void setNumeroSerie(uint32_t valor);
 
     /*
-    PRE: Recibe el nombre (std::string &) a un archivo que
-    tiene un certificado ya creado.
-    POST: Carga el certificado con la informacion del 
-    archivo.
-    Devuelve true si logro lo anterior, false en caso 
-    contrario.
+    PRE: Recibe un asunto (std::string &).
+    POST: Setea en el certificado el asunto recibido.
     */
-    //bool cargar(std::string &nombreArchivo);
+    void setAsunto(std::string &asunto);
 
-    /*
-    Crea un archivo <sujeto>.cert y guarda en el certificado actual.
-    */
-    //bool guardar();
+    /*Devuelve el sujeto (std::string) del certificado*/
+    std::string getSujeto();
 
-    /*
-    PRE: Recibe una referencia a una string (std::string &).
-    POST: Copia en la referencia la representacion del certificado 
-    actual.
-    */
-    void a_string(std::string &cadena);
+    /*Devuelve una representacion (std::string) del certificado actual.*/
+    std::string a_string() const;
     
     /*Devuelve el hash (uint32_t) de certificado actual*/
     uint32_t hashear();
@@ -94,18 +81,18 @@ class Certificado {
     POST: Recibe y almacena la informacion de un 
     certificado en el orden en que el metodo enviar
     la envia, a traves del protocolo
-    Devuelve true, si logro lo anterior con exito,
-    false en caso contrario.
+    Levanta OSError en caso de error.
     */
-    bool recibir(Protocolo &proto);
+    void recibir(Protocolo &proto);
 
     /*
     PRE: Recibe un protocolo (Protocolo &) ya creado.
     POST: Envia cada campo del certificado en el orden que 
-    aparecen de arriba hacia abajo un su representacion.,
+    aparecen de arriba hacia abajo un su representacion,
     a traves del protocolo recibido.
+    Levanta OSError en caso de error.
     */
-    bool enviar(Protocolo &proto);
+    void enviar(Protocolo &proto);
 
     /*
     PRE: Recibe un protocolo (Protocolo &) creado 
@@ -113,11 +100,9 @@ class Certificado {
     desee crear un certificado.
     POST: Recibe los parametros para crear el certificado
     en el orden que los envia el metodo enviar_parametros.
-    Devuelve true si logro recibir y guardar en si mismo
-    todos estos parametros recibidos; false en caso 
-    contrario.
+    Levanta OSError en caso de error.
     */
-    bool recibir_parametros(Protocolo &proto);
+    void recibir_parametros(Protocolo &proto);
 
     /*
     PRE: Recibe un protocolo (Protocolo &) creado 
@@ -125,9 +110,32 @@ class Certificado {
     POST: Envia los parametros que la autoridad necesita
     del certificado actual para certificarlo, en el orden
     que la autoridad certificante los espera.
-    Devuelve true si logro lo anterior; false en caso
-    contrario. 
+    Levanta OSError en caso de error. 
     */
-    bool enviar_parametros(Protocolo &proto);
+    void enviar_parametros(Protocolo &proto);
+
+    /*
+    PRE: Recibe una referencia a una linea (std::string &)
+    de un archivo que contiene un certificado.
+    POST: Procesa la linea guardando informacion de ella
+    segun corresponda, para modelizar el certificado del
+    archivo en la clase actual.
+    */
+    void _procesar_linea(std::string &linea);
+
+    /*
+    PRE: Recibe un flujo de entrada (istream &) que contenga
+    un certificado ya creado.
+    POST: Carga el certificado actual con la informacion del 
+    flujo.
+    */
+    void cargar(std::istream &in);
+
+    /*
+    PRE: Recibe un flujo de salida (ostream &).
+    POST: Escribe en flujo de salida, una representacion del 
+    certificado.
+    */
+    void guardar(std::ostream &out) const;
 };
 #endif // CERTIFICADO_H 

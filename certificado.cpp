@@ -1,12 +1,15 @@
 #include "certificado.h"
 #include "spliter.h"
+#include "error.h"
+
+#include <iostream> // solo para pruebas
 
 /*
 PRE: Recibe un entero sin signo de 4 bytes.
 POST: Devuelve una representacion (std::string) 
 hexagesimal del valor recibido.
 */
-std::string a_hexa32_string(uint32_t &valor){
+std::string a_hexa32_string(const uint32_t &valor){
     char buffer[11]; //+0x + 8 letras +\0
     size_t largo = sizeof(buffer);
     snprintf(buffer, largo, "0x%08x", valor);
@@ -18,7 +21,7 @@ PRE: Recibe un entero sin signo de 2 bytes.
 POST: Devuelve una representacion (std::string) 
 hexagesimal del valor recibido.
 */
-std::string a_hexa16_string(uint16_t &valor){
+std::string a_hexa16_string(const uint16_t &valor){
     char buffer[7]; //+0x + 4 letras + \0
     size_t largo = sizeof(buffer);
     snprintf(buffer, largo, "0x%04x", valor);
@@ -31,7 +34,7 @@ PRE: Recibe un entero sin signo de 1 bytes.
 POST: Devuelve una representacion (std::string) 
 hexagesimal del valor recibido.
 */
-std::string a_hexa8_string(uint8_t &valor){
+std::string a_hexa8_string(const uint8_t &valor){
     char buffer[5]; //+0x + 2 letras + \0
     size_t largo = sizeof(buffer);
     snprintf(buffer, largo, "0x%02x", valor);
@@ -70,6 +73,139 @@ Certificado::Certificado(ClaveRSA &clvClnt, std::vector<std::string> &info){
 Certificado::~Certificado(){}
 
 /*
+PRE: Recibe un numero serie (uint32_t).
+POST Setea en el certificaod el numero de serie recibido.
+*/
+void Certificado::setNumeroSerie(uint32_t valor){
+    this->numeroSerie = valor;
+}
+
+/*
+PRE: Recibe un asunto (std::string &).
+POST: Setea en el certificado el asunto recibido.
+*/
+void Certificado::setAsunto(std::string &asunto){
+    this->asunto = asunto;
+}
+
+/*Devuelve el sujeto (std::string) del certificado*/
+std::string Certificado::getSujeto(){
+    std::string sujeto = this->sujeto;
+    return std::move(sujeto);
+}
+
+/*Devuelve una representacion (std::string) del certificado actual.*/
+std::string Certificado::a_string() const{
+    std::string certificado = "certificate:\n";
+    certificado += "\tserial number: " + std::to_string(this->numeroSerie); 
+    certificado += " (" + a_hexa32_string(this->numeroSerie) + ")" + "\n"; 
+    certificado += "\tsubject: " + this->sujeto + "\n";
+    certificado += "\tissuer: " + this->asunto + "\n"; //Taller de programacion 1
+    certificado += "\t​validity:​\n";
+    certificado += "\t\tnot before: " + this->inicio + "\n";
+    certificado += "\t\tnot after: " + this->fin + "\n";
+    certificado += "\tsubject public key info:\n";
+    certificado += "\t\tmodulus: " + std::to_string(this->mod);
+    certificado += " (" + a_hexa16_string(this->mod) + ")" + "\n"; 
+    certificado += "\t\texponent: " + std::to_string(this->exp); 
+    certificado += " (" + a_hexa8_string(this->exp) + ")" + "\n"; 
+    return std::move(certificado);
+}
+
+/*Devuelve el hash (uint32_t) de certificado actual*/
+uint32_t Certificado::hashear(){
+    std::string certificado = this->a_string();;
+    Hash hash;
+    return hash.hashear(certificado, certificado.size());
+}
+
+/*
+PRE: Recibe un protocolo (Protocolo &) ya creadp.
+POST: Recibe y almacena la informacion de un 
+certificado en el orden en que el metodo enviar
+la envia, a traves del protocolo
+Levanta OSError en caso de error.
+*/
+void Certificado::recibir(Protocolo &proto){
+    try {
+        proto.recibir_cuatro_bytes(this->numeroSerie);
+        proto.recibir_mensaje(this->asunto);
+        proto.recibir_mensaje(this->sujeto);
+        proto.recibir_mensaje(this->inicio);
+        proto.recibir_mensaje(this->inicio);
+        proto.recibir_dos_bytes(this->mod);
+        proto.recibir_un_byte(this->exp);
+    } catch (OSError &e){
+        std::string err = "Error al recibir certificado.";
+        throw OSError(err.data());
+    }
+}
+
+/*
+PRE: Recibe un protocolo (Protocolo &) ya creado.
+POST: Envia cada campo del certificado en el orden que 
+aparecen de arriba hacia abajo un su representacion,
+a traves del protocolo recibido.
+Levanta OSError en caso de error.
+*/
+void Certificado::enviar(Protocolo &proto){
+    try {
+        proto.enviar_bytes(this->numeroSerie, 4);
+        proto.enviar_mensaje(this->asunto);
+        proto.enviar_mensaje(this->sujeto);
+        proto.enviar_mensaje(this->inicio);
+        proto.enviar_mensaje(this->fin);
+        proto.enviar_bytes(this->mod, 2);
+        proto.enviar_bytes(this->exp, 1);
+    } catch (OSError &e){
+        std::string err = "Error al enviar certificado";
+        throw OSError(err.data());
+    }
+}
+
+/*
+PRE: Recibe un protocolo (Protocolo &) creado 
+para recibir informacion de un cliente que 
+desee crear un certificado.
+POST: Recibe los parametros para crear el certificado
+en el orden que los envia el metodo enviar_parametros.
+Levanta OSError en caso de error.
+*/
+void Certificado::recibir_parametros(Protocolo &proto){
+    try {
+        proto.recibir_mensaje(this->sujeto);
+        proto.recibir_dos_bytes(this->mod);
+        proto.recibir_un_byte(this->exp);
+        proto.recibir_mensaje(this->inicio);
+        proto.recibir_mensaje(this->fin);
+    } catch (OSError &e){
+        std::string err = "Error al recibir parametros de creacion";
+        throw OSError(err.data());
+    }
+}
+
+/*
+PRE: Recibe un protocolo (Protocolo &) creado 
+para enviar informacion una autoridad certificante.
+POST: Envia los parametros que la autoridad necesita
+del certificado actual para certificarlo, en el orden
+que la autoridad certificante los espera.
+Levanta OSError en caso de error. 
+*/
+void Certificado::enviar_parametros(Protocolo &proto){
+    try {
+        proto.enviar_mensaje(this->sujeto);
+        proto.enviar_bytes(this->mod, 2);
+        proto.enviar_bytes(this->exp, 1);
+        proto.enviar_mensaje(this->inicio);
+        proto.enviar_mensaje(this->fin);
+    } catch (OSError &e){
+        std::string err = "Erroa al enviar parametros del certificado.";
+        throw OSError(err.data());
+    }
+}
+
+/*
 PRE: Recibe una referencia a una linea (std::string &)
 de un archivo que contiene un certificado.
 POST: Procesa la linea guardando informacion de ella
@@ -79,7 +215,7 @@ archivo en la clase actual.
 void Certificado::_procesar_linea(std::string &linea){
     size_t pos = 0;
     std::string lineaSinTabs = linea; 
-    while ((pos = linea.find('\t')) != std::string::npos) {
+    while ((pos = lineaSinTabs.find('\t')) != std::string::npos) {
         lineaSinTabs = lineaSinTabs.substr(pos+1);
     }
     Spliter spliter;
@@ -132,172 +268,68 @@ void Certificado::_procesar_linea(std::string &linea){
 }   
 
 /*
-PRE: Recibe el nombre (std::string &) a un archivo que
-tiene un certificado ya creado.
-POST: Carga el certificado con la informacion del 
-archivo.
-Devuelve true si logro lo anterior, false en caso 
-contrario.
+PRE: Recibe un flujo de entrada (istream &) que contenga
+un certificado ya creado.
+POST: Carga el certificado actual con la informacion del 
+flujo.
 */
-/*
-bool Certificado::cargar(std::string &nombreArchivo){
-    std::ifstream archCertif;
-    archCertif.open(nombreArchivo);
-    if (! archCertif.is_open()){
-        return false;
-    }
-    std::string linea = 0;
-    std::getline(archCertif, linea);
-    while (archCertif.good()){
+void Certificado::cargar(std::istream &in){
+    std::string linea;
+    std::getline(in, linea);
+    while (in.good()){
         this->_procesar_linea(linea);
-        std::getline(archCertif, linea);
-    }
-    return true;
-}
-*/
-/*
-Crea un archivo <sujeto>.cert y guarda en el certificado actual.
-*/
-/*
-bool Certificado::guardar(){ //Sobrecargar << , en esta clase o en una clase Archivo
-    std::string certificado = 0;
-    this->a_string(certificado);
-    std::string terminacion = ".cert";
-    return escribirArchivo(this->sujeto, terminacion, certificado);
-}
-*/
-/*
-PRE: Recibe una referencia a una string (std::string &).
-POST: Copia en la referencia la representacion del certificado 
-actual.
-*/
-void Certificado::a_string(std::string &cadena){
-    std::string certificado = "certificate:\n";
-    certificado += "\tserial number: " + this->numeroSerie; 
-    certificado += a_hexa32_string(this->numeroSerie) + "\n"; 
-    certificado += "\tsubject: " + this->sujeto + "\n";
-    certificado += "\tissuer: " + this->asunto + "\n"; //Taller de programacion 1
-    certificado += "\t​validity:​\n";
-    certificado += "\t\tnot before: " + this->inicio + "\n";
-    certificado += "\t\tnot after: " + this->fin + "\n";
-    certificado += "\tsubject public key info:\n";
-    certificado += "\t\tmodulus: " + std::to_string(this->mod);
-    certificado += a_hexa16_string(this->mod) + "\n"; 
-    certificado += "\t\texponent: " + std::to_string(this->exp); 
-    certificado += a_hexa8_string(this->exp) + "\n"; 
-    cadena = certificado;
-}
-
-/*Devuelve el hash (uint32_t) de certificado actual*/
-uint32_t Certificado::hashear(){
-    std::string certificado = 0;
-    this->a_string(certificado);
-    Hash hash;
-    return hash.hashear(certificado, certificado.size());
-}
-
-/*
-PRE: Recibe un protocolo (Protocolo &) ya creadp.
-POST: Recibe y almacena la informacion de un 
-certificado en el orden en que el metodo enviar
-la envia, a traves del protocolo
-Levanta OSError en caso de error.
-*/
-void Certificado::recibir(Protocolo &proto){
-    try {
-        proto.recibir_cuatro_bytes(this->numeroSerie);
-        proto.recibir_mensaje(this->asunto);
-        proto.recibir_mensaje(this->sujeto);
-        proto.recibir_mensaje(this->inicio);
-        proto.recibir_mensaje(this->inicio);
-        proto.recibir_dos_bytes(this->mod);
-        proto.recibir_un_byte(this->exp);
-    } catch (OSError &e){
-        std::string err = "Error al recibir certificado."
-        throw OSError(err.data());
+        std::getline(in, linea);
     }
 }
 
 /*
-PRE: Recibe un protocolo (Protocolo &) ya creado.
-POST: Envia cada campo del certificado en el orden que 
-aparecen de arriba hacia abajo un su representacion,
-a traves del protocolo recibido.
-Levanta OSError en caso de error.
+PRE: Recibe un flujo de salida (ostream &).
+POST: Escribe en flujo de salida, una representacion del 
+certificado.
 */
-void Certificado::enviar(Protocolo &proto){
-    try {
-        proto.enviar_bytes(this->numeroSerie, 4);
-        proto.enviar_mensaje(this->asunto);
-        proto.enviar_mensaje(this->sujeto);
-        proto.enviar_mensaje(this->inicio);
-        proto.enviar_mensaje(this->fin);
-        proto.enviar_bytes(this->mod, 2);
-        proto.enviar_bytes(this->exp, 1);
-    } catch (OSError &e){
-        std::string err = "Error al enviar certificado";
-        throw OSError(err);
-    }
+void Certificado::guardar(std::ostream &out) const { 
+    out << this->a_string();
 }
 
-/*
-PRE: Recibe un protocolo (Protocolo &) creado 
-para recibir informacion de un cliente que 
-desee crear un certificado.
-POST: Recibe los parametros para crear el certificado
-en el orden que los envia el metodo enviar_parametros.
-Levanta OSError en caso de error.
-*/
-void Certificado::recibir_parametros(Protocolo &proto){
-    try {
-        proto.recibir_mensaje(this->sujeto);
-        proto.recibir_dos_bytes(this->mod);
-        proto.recibir_un_byte(this->exp);
-        proto.recibir_mensaje(this->inicio);
-        proto.recibir_mensaje(this->fin);
-    } catch (OSError &e){
-        std::string err = "Error al recibir parametros de creacion";
-        throw OSError(err.data());
-    }
+/*Sobrecarga del operador >> de istream para clase ContadorBloq*/
+std::istream& operator>>(std::istream &in, Certificado &certif){
+    certif.cargar(in);
+    return in;
 }
 
-/*
-PRE: Recibe un protocolo (Protocolo &) creado 
-para enviar informacion una autoridad certificante.
-POST: Envia los parametros que la autoridad necesita
-del certificado actual para certificarlo, en el orden
-que la autoridad certificante los espera.
-Devuelve true si logro lo anterior; false en caso
-contrario. 
-*/
-void Certificado::enviar_parametros(Protocolo &proto){
-    //Enviamos el subject
-    todoOK = proto.enviar_mensaje(this->sujeto);
-    if (!todoOK) {
-        return false;
-    }
+/*Sobrecarga del operador << de ostream para clase ContadorBloq*/
+std::ostream& operator<<(std::ostream &out, const Certificado &certif){
+    certif.guardar(out);
+    return out;
+}
 
-    ///Enviamos el modulo del cliente
-    todoOK = proto.enviar_bytes(this->mod, 2);
-    //2 bytes
-    if (!todoOK) {
-        return false;
-    }
+void prueba_certificado_guardar(){
+    std::ofstream archCertificado;
+    archCertificado.open("arch.cert");
+    ClaveRSA clave(19,0,253);
+    std::vector<std::string> info;
+    info.push_back(std::string("A Sujeto"));
+    info.push_back(std::string("Abr 27 19:11:00 2019"));
+    info.push_back(std::string("May 30 07:00:00 2019"));
+    Certificado certif(clave, info);
+    certif.setNumeroSerie(1);
+    std::string asunto = "Taller de programacion 1";
+    certif.setAsunto(asunto);
+    archCertificado << certif;
+    archCertificado.close();
+}
 
-    //Enviamos el exponente publico del cliente
-    todoOK = proto.enviar_bytes(this->exp, 1);
-    //1 byte
-    if (!todoOK) {
-        return false;
-    }
-    //Enviamos la fecha de inicio del certificado
-    todoOK = proto.enviar_mensaje(this->inicio);
-    if (!todoOK) {
-        return false;
-    }
+void prueba_certificado_cargar(){
+    std::ifstream archCertificado;
+    archCertificado.open("arch.cert");
+    Certificado certif;
+    archCertificado >> certif;
+    std::cout << certif;
+    std::cout << "Sujeto es: " << certif.getSujeto() << "\n";
+}
 
-    //Enviamos fecha finalizacion del certificado 
-    todoOK = proto.enviar_mensaje(this->fin);
-
-    return todoOK;
+int main(){
+    //prueba_certificado_guardar();
+    prueba_certificado_cargar();
+    return 0;
 }
