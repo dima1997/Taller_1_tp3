@@ -1,66 +1,76 @@
+#include <fstream>
+#include <iostream>
 #include "server.h"
-#include "common.h"
+#include "socket.h"
+#include "hilos.h"
+#include "hilos_aux.h"
+#include "claves.h"
+#include "error.h"
 
-MapaBloq::MapaBloq(){}
-MapaBloq::~MapaBloq
+/*Inicializa un servidor*/
+Servidor::Servidor(){}
 
+/*Destruye un servidor*/
+Servidor::~Servidor(){}
 
-HiloFin::HiloFin(bool &seguirEjecutando) : seguirEjecutando(seguirEjecutando){}
+/*
+PRE: Recibe un 3 cadenas de caracteres (const char *): el puerto
+desde donde escuchar la entrada de clientes, el nombre del archivo
+donde se encuentran las claves del servidor, y el nombre del archivo
+tipo index donde esta el proximo numero de serie, y la informacion 
+de certificados creados.
+POST: Ejecuta un servidor que crea y revoca certificados
+*/
+void Servidor::ejecutar(const char* puerto, const char* claves, 
+const char* indice){
+    Socket sktPasivo(puerto);
+    sktPasivo.escuchar(20);
+    ContadorBloq contador;
+    MapaBloq sujetosClaves;
 
-HiloFin::~HiloFin(){} 
+    std::ifstream archIndiceEntrada;
+    archIndiceEntrada.open(indice);
+    archIndiceEntrada >> contador;
+    archIndiceEntrada >> sujetosClaves;
+    archIndiceEntrada.close();
+    
+    ClaveRSA claveSvr;
+    
+    std::ifstream archClaves;
+    archClaves.open(claves);
+    archClaves >> claveSvr;
+    archClaves.close();
 
-void HiloFin::run(){
-    char caracter = 0;
-    while (caracter != 'q' && seguirEjecutando){
-        cin.get(caracter);
+    HAceptador hiloAceptador(sktPasivo, contador, sujetosClaves, claveSvr);
+    hiloAceptador.start();
+    char caracterSalida = 0;
+    std::cin.get(caracterSalida);
+    while (caracterSalida != 'q'){
+        std::cin.get(caracterSalida);
     }
-    this->seguirEjecutando = false;
+    hiloAceptador.finalizar();
+    hiloAceptador.join();
+
+    std::ofstream archIndiceSalida;
+    archIndiceSalida.open(indice);
+    archIndiceSalida << contador;
+    archIndiceSalida << sujetosClaves;
+    archIndiceSalida.close();
     return;
 }
 
-int main(int argc, const char* argv[]){
-    //./server 2000 server.keys index.txt
+int main(int argc, const char *argv[]){
     if (argc != 4){
+        return 1; //Aunque no deberia pasar
+    }
+    const char *puerto = argv[1];
+    const char *claves = argv[2];
+    const char *indice = argv[3];
+    try {
+        Servidor servidor;
+        servidor.ejecutar(puerto, claves, indice);
+    } catch (OSError &e) {
         return 1;
     }
-    std::string puerto = argv[1];
-    std::string rutaClaves = argv[2];
-    std::string rutaIndice = argv[3];
-    Servidor svr(puerto, rutaClaves, rutaIndice);
-    return svr.ejecutar();
-}
-
-Servidor::Servidor(std::string &prto, std::string &rtaClv, std::string &rtaInd){
-    this->skt = new Socket();
-    this->skt.enlazar(prto.data());
-
-}
-
-Servidor::~Servidor(){
-    delete this->skt;
-}
-
-/*
-Mientras no se reciba una letra 'q' por entrada estandar,
-el servidor aceptar cliente y se comunica con ellos
-creando o revocando certificados. 
-*/
-int Servidor::ejecutar(){
-    bool seguirEjecutando = true;
-    HiloFin hiloFin(seguirEjecutando);
-    hiloFin.start();
-    bool todoOK = true;
-    while (seguirEjecutando ){
-        Socket sktActivo();
-        todoOK = this->skt.aceptar(sktActivo);
-        if(! todoOK){
-            break;
-        }
-        AutoridadCertif(sktActivo);
-        AutoridadCertif.ejecutar();
-
-    }  
-    seguirEjecutando = false;
-    hiloFin.join();
-    return todoOK ? 0 : 1;
+    return 0;
 }

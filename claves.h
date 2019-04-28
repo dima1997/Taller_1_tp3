@@ -61,19 +61,6 @@ struct ClaveRSA{
     */
     ClaveRSA& operator=(ClaveRSA&& otraClave);
 
-
-    /*
-    PRE: Recibe el nombre de un archivo que contiene las claves
-    publicas y/o privadas de una entidad, de la forma:
-    <exponente-publico> <exponente-privado> <modulo>
-    o
-    <exponente-publico> <modulo>
-    POST: Actualiza los valores de la claves rsa, con los 
-    encontrados en el archivo.
-    Devuelve true si logro lo anterior, false en caso contrario.
-    */
-    //bool cargar_claves(std::string &nombreArchivo);
-
     /*
     PRE: Recibe una cadena de caracteres (std::string &) que 
     contiene las claves publicas y/o privadas de una entidad, 
@@ -112,5 +99,30 @@ struct ClaveRSA{
     encriptado con el exponente privado.
     */
     uint32_t encriptar_privado(uint32_t valor);
+
+    /*
+    PRE: Recibe el nombre de un flujo de entrada (std::istream &) 
+    que contiene las claves publicas y/o privadas de una entidad, 
+    de la forma:
+    <exponente-publico> <exponente-privado> <modulo>
+    o
+    <exponente-publico> <modulo>
+    POST: Actualiza los valores de la claves rsa, con los 
+    encontrados en el archivo.
+    */
+    void cargar(std::istream &in);
+
+    /*
+    Devuelve el exponente publico (uint8_t) de 
+    la clave
+    */
+    uint8_t getExpPublico();
+
+    /*Devuelve el modulo (uint16_t) de la clave*/
+    uint16_t getModulo();
 };
+
+/*Sobrecarga del operador >> para ClaveRSA*/
+std::istream& operator>>(std::istream &in, ClaveRSA &clave);
+
 #endif // CLAVES_H

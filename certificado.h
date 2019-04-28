@@ -67,9 +67,14 @@ class Certificado {
     */
     void setAsunto(std::string &asunto);
 
+    /*
+    PRE: Recibe las claves publicas del cliente (ClaveRSA &).
+    POST: Actualiza la claves publicas del certificado 
+    */
+    void setClave(ClaveRSA &clave);
+
     /*Devuelve el sujeto (std::string) del certificado*/
     std::string getSujeto();
-
 
     /*Devuelve la clave publica del certificado*/
     ClaveRSA getClave();
@@ -126,6 +131,13 @@ class Certificado {
     archivo en la clase actual.
     */
     void _procesar_linea(std::string &linea);
+
+    /*
+    PRE: Recibe un flujo de entrada que contenga informacion del 
+    certificado a crear : subject, fecha de inicio, fecha de finalizacion.
+    POST: Carga en el certificado actual los datos anteriores.
+    */
+    void cargar_info(std::istream &in);
 
     /*
     PRE: Recibe un flujo de entrada (istream &) que contenga

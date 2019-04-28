@@ -1,6 +1,7 @@
 #include "certificado.h"
 #include "spliter.h"
 #include "error.h"
+#include "tiempo.h"
 
 #include <iostream> // solo para pruebas
 
@@ -52,23 +53,6 @@ Certificado::Certificado(){
     this->mod = 0;
 }
 
-/*
-PRE: Recibe las claves publicas del cliente (ClaveRSA &, con los 
-expPublico y modulo correctos), y un vector de strings con informacion
-de el sujeto del certificado, la fecha de inicio, y de final 
-(en ese orden).
-POST: Inicializa un certificado con dicha informacion. 
-*/
-Certificado::Certificado(ClaveRSA &clvClnt, std::vector<std::string> &info){
-    this->numeroSerie = 0;
-    this->asunto = "";
-    this->sujeto = info[0];
-    this->inicio = info[1];
-    this->fin = info[2];
-    this->exp = clvClnt.expPublico;
-    this->mod = clvClnt.modulo;
-}
-
 /*Destruye un certificado*/
 Certificado::~Certificado(){}
 
@@ -86,6 +70,15 @@ POST: Setea en el certificado el asunto recibido.
 */
 void Certificado::setAsunto(std::string &asunto){
     this->asunto = asunto;
+}
+
+/*
+PRE: Recibe las claves publicas del cliente (ClaveRSA &).
+POST: Actualiza la claves publicas del certificado 
+*/
+void Certificado::setClave(ClaveRSA &clave){
+    this->exp = clave.getExpPublico();
+    this->mod = clave.getModulo();
 }
 
 /*Devuelve el sujeto (std::string) del certificado*/
@@ -271,7 +264,32 @@ void Certificado::_procesar_linea(std::string &linea){
     //Suponemos que el certificado no va a tener errores.
     return;
 
-}   
+} 
+
+/*
+PRE: Recibe un flujo de entrada que contenga informacion del 
+certificado a crear : subject, fecha de inicio, fecha de finalizacion.
+POST: Carga en el certificado actual los datos anteriores.
+*/
+void Certificado::cargar_info(std::istream &in){
+    std::string linea;
+    std::getline(linea);
+    this->sujeto = std::move(in, linea);
+    std::getline(in, linea);
+    if (! in.good()){
+        //No hay fecha de inicio, ni final
+        Tiempo tiempo;
+        this->inicio = tiempo.representar();
+        tiempo.sumar_dias(30);
+        this->fin = tiempo.representar();
+        return;
+    }
+    //Suponemos que abra tanto inicio como final
+    this->inicio = linea;
+    std::getline(in, linea);
+    this->fin = linea;
+    return;
+}
 
 /*
 PRE: Recibe un flujo de entrada (istream &) que contenga

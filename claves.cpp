@@ -1,4 +1,6 @@
+#include <iostream>
 #include <vector>
+#include <string>
 #include "hash.h"
 #include "claves.h"
 #include "spliter.h"
@@ -101,38 +103,6 @@ std::string ClaveRSA::a_string_publica() const{
 }
 
 /*
-PRE: Recibe el nombre de un archivo que contiene las claves
-publicas y/o privadas de una entidad, de la forma:
-<exponente-publico> <exponente-privado> <modulo>
-o
-<exponente-publico> <modulo>
-POST: Actualiza los valores de la claves rsa, con los 
-encontrados en el archivo.
-Devuelve true si logro lo anterior, false en caso contrario.
-*/
-/*
-bool ClaveRSA::cargar_claves(std::string &nombreArchivo){
-    std::string todasClaves = 0;
-    bool todoOK = true;
-    todoOK = cargarArchivo(nombreArchivo, todasClaves);
-    if (! todoOK){
-        return false;
-    }
-    std::vector<std::string> partesClaves(0);
-    std::string separador = " ";
-    split(todasClaves, separador, partesClaves);
-    this->expPublico = atoi(partesClaves[0].data());
-    if (partesClaves.size() < 3){
-        this->modulo = atoi(partesClaves[1].data());
-    } else {
-        this->expPrivado = atoi(partesClaves[1].data());
-        this->modulo = atoi(partesClaves[2].data());
-    }
-    return true;
-}
-*/
-
-/*
 PRE: Recibe una cadena de caracteres (std::string &) que 
 contiene las claves publicas y/o privadas de una entidad, 
 de la forma:
@@ -175,4 +145,40 @@ encriptado con el exponente privado.
 uint32_t ClaveRSA::encriptar_privado(uint32_t valor){
     Encriptador encrip;
     return encrip.encriptar(valor, this->expPrivado, this->modulo);
+}
+
+
+/*
+PRE: Recibe el nombre de un flujo de entrada (std::istream &) 
+que contiene las claves publicas y/o privadas de una entidad, 
+de la forma:
+<exponente-publico> <exponente-privado> <modulo>
+o
+<exponente-publico> <modulo>
+POST: Actualiza los valores de la claves rsa, con los 
+encontrados en el archivo.
+*/
+void ClaveRSA::cargar(std::istream &in){
+    std::string linea;
+    std::getline(in, linea);
+    this->actualizar(linea);
+}
+
+/*
+Devuelve el exponente publico (uint8_t) de 
+la clave
+*/
+uint8_t ClaveRSA::getExpPublico(){
+    return this->expPublico;
+}
+
+/*Devuelve el modulo (uint16_t) de la clave*/
+uint16_t ClaveRSA::getModulo(){
+    return this->modulo;
+}
+
+/*Sobrecarga del operador >> para ClaveRSA*/
+std::istream& operator>>(std::istream &in, ClaveRSA &clave){
+    clave.cargar(in);
+    return in;
 }

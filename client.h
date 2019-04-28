@@ -1,42 +1,5 @@
-#ifndef CLIENT_H
-#define CLIENT_H
-#include <ctime>
-#include "common.h"
-
-typedef std::vector<std::string> strVec;
-typedef std::string str;
-
-class Tiempo {
-    public:
-    //struct tm *tiempo;
-    time_t tiempo;
-    /*Inicializa el tiempo en el horario actual.*/
-    Tiempo();
-
-    /*Destruye el tiempo*/
-    ~Tiempo();
-
-    /*Devuelve true, si el año del tiempo es bisiesto.*/
-    bool es_bisiesto();
-
-    /*Devuelve la cantidad (size_t) de dias del mes del tiempo actual.*/
-    size_t cuantos_dias_mes();
-
-    /*
-    PRE: Recibe una cantidad (size_t) de dias a sumar.
-    POST: Suma la cantidad recibida al tiempo actual
-    */
-    void sumar_dias(size_t dias);
-
-    /*
-    PRE: Recibe una referencia a una string (string &).
-    POST: Modifica el contenido de la string, 
-    reemplazandolo por una representacion del tiempo actual:
-    MM DD hh:mm:ss YYYY
-    */
-    void representar(str &representacion);
-};
-
+#ifndef CLIENTE_H
+#define CLIENTE_H
 class Cliente {
     public:
     Socket *skt;
@@ -103,4 +66,4 @@ class Cliente {
     bool revocar_certif(str &nmbrCertif, str &nmbrClvClnt, str &nmbrClvSvr);
 };
 
-#endif // CLIENT_H
+#endif // CLIENTE_H
