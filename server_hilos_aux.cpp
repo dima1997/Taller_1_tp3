@@ -241,6 +241,9 @@ void ContadorBloq::cargar(std::istream &in){
     }
     std::string linea;
     std::getline(in, linea);
+    if (! in.good()){
+        return;
+    }
     std::lock_guard<std::mutex> lock(this->centinela);
     this->cuenta = (uint32_t) stoi(linea);
 }

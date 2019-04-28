@@ -79,11 +79,16 @@ class Socket{
 
     /*
     PRE: Recibe el modo en que se desea cerrar al socket:
-    SHUT_RD, SHUT_WR, SHUT_RDWR
+    SHUT_RD: 0,
+    SHUT_WR: 1,
+    SHUT_RDWR: 2
     POST: Cierra el socket. 
     */
     void cerrar_canal(int modoCierre);
     
+    /*Cierra el socket*/
+    void cerrar();
+
     /*
     PRE: Recibe un mensaje (const char*) a enviar, y su 
     longitud (size_t).

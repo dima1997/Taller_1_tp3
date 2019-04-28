@@ -59,10 +59,12 @@ const char* indice){
     return;
 }
 
-int main(int argc, const char *argv[]){
-    if (argc != 4){
+int main(int argc, const char* argv[]) {
+    /*
+    if (argc != 4) {
         return 1; //Aunque no deberia pasar
     }
+    */
     const char *puerto = argv[1];
     const char *claves = argv[2];
     const char *indice = argv[3];

@@ -146,7 +146,15 @@ HAceptador::~HAceptador(){}
 void HAceptador::run(){
     std::vector<Thread*> hilos;
     while (! this->estaMuerto){
-        Socket sktActivo = this->skt.aceptar(); //Aca podria saltar un error
+        Socket sktActivo;
+        try {
+            sktActivo = this->skt.aceptar();
+        } catch (OSError &e){
+            //O bien se corto desde afuera y debo salir
+            //O bien ocurrio un error y debo terminar 
+            //la ejecucion del hilo
+            break;
+        }
         HCertfcdor *hiloCertfcdor;
         ContadorBloq &contador = this->contador;
         MapaBloq &mapa = this->sujetosClaves; 
@@ -185,4 +193,6 @@ bool HAceptador::is_dead(){
 /*Le indica al hilo aceptardor que debe dejar ejecutarse*/
 void HAceptador::finalizar(){
     this->estaMuerto = true;
+    this->skt.cerrar_canal(2); //SHUT_RDWR
+    this->skt.cerrar();
 }

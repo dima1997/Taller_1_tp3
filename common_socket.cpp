@@ -112,7 +112,7 @@ Levanta OSError en caso de error de enlazamiento.
 */
 Socket::Socket(const char *puerto){
     int estado = 0;
-    int skt = 0;
+    this->skt = 0;
     struct addrinfo hints;
     struct addrinfo *direccion;
     memset(&hints, 0, sizeof(struct addrinfo));
@@ -125,23 +125,23 @@ Socket::Socket(const char *puerto){
         gai_strerror(estado));
     }
     struct addrinfo *dir = direccion;
-    skt = socket(dir->ai_family, dir->ai_socktype, dir->ai_protocol);
-    if (skt == -1) {
+    this->skt = socket(dir->ai_family, dir->ai_socktype, dir->ai_protocol);
+    if (this->skt == -1) {
         freeaddrinfo(direccion);
         throw OSError(__FILE__,__LINE__,"Error al enlazar socket.");
     }
     // Evita que le servidor falle al abrirlo y cerrarlo en poco tiempo
     int val = 1;
-    estado = setsockopt(skt, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val));
+    estado = setsockopt(this->skt, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val));
     if (estado == -1) {
-        close(skt);
+        close(this->skt);
         freeaddrinfo(direccion);
         throw OSError(__FILE__,__LINE__,"Error al enlazar socket.");
     }
-    estado = bind(skt, dir->ai_addr, dir->ai_addrlen);
+    estado = bind(this->skt, dir->ai_addr, dir->ai_addrlen);
     freeaddrinfo(direccion);
     if (estado == -1) {
-        close(skt);
+        close(this->skt);
         throw OSError(__FILE__,__LINE__,"Error al enlazar socket.");
     }
 }
@@ -157,8 +157,7 @@ Levanta OSError en caso de error.
 void Socket::escuchar(size_t cuantosEscuchar){
     int estado = listen(this->skt, cuantosEscuchar);
     if (estado == -1) {
-        //close(this->skt); //Se deberia cerrar desde el exterior
-        throw OSError(__FILE__,__LINE__,"Error al poner a escuchar socket.");
+        throw OSError(__FILE__,__LINE__,strerror(errno));
     }
 }
 
@@ -178,11 +177,26 @@ Socket Socket::aceptar(){
     
 /*
 PRE: Recibe el modo en que se desea cerrar al socket:
-SHUT_RD, SHUT_WR, SHUT_RDWR
+SHUT_RD: 0,
+SHUT_WR: 1,
+SHUT_RDWR: 2
 POST: Cierra el socket. 
 */
 void Socket::cerrar_canal(int modoCierre){
-    shutdown(this->skt, modoCierre);
+    if (modoCierre == 0){
+        shutdown(this->skt, SHUT_RD);
+    }
+    if (modoCierre == 1){
+        shutdown(this->skt, SHUT_WR);
+    }
+    if (modoCierre == 2){
+        shutdown(this->skt, SHUT_RDWR);
+    }
+}
+
+/*Cierra el socket*/
+void Socket::cerrar(){
+    close(this->skt);
 }
     
 /*
