@@ -94,6 +94,12 @@ std::string Certificado::getSujeto(){
     return std::move(sujeto);
 }
 
+/*Devuelve la clave publica del certificado*/
+ClaveRSA Certificado::getClave(){
+    ClaveRSA clave(this->exp, 0, this->mod);
+    return std::move(clave);
+}
+
 /*Devuelve una representacion (std::string) del certificado actual.*/
 std::string Certificado::a_string() const{
     std::string certificado = "certificate:\n";
@@ -327,9 +333,10 @@ void prueba_certificado_cargar(){
     std::cout << certif;
     std::cout << "Sujeto es: " << certif.getSujeto() << "\n";
 }
-
+/*
 int main(){
     //prueba_certificado_guardar();
     prueba_certificado_cargar();
     return 0;
 }
+*/

@@ -70,6 +70,10 @@ class Certificado {
     /*Devuelve el sujeto (std::string) del certificado*/
     std::string getSujeto();
 
+
+    /*Devuelve la clave publica del certificado*/
+    ClaveRSA getClave();
+
     /*Devuelve una representacion (std::string) del certificado actual.*/
     std::string a_string() const;
     

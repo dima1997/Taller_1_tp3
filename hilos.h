@@ -59,11 +59,13 @@ class HCertfcdor : public Thread {
     Socket skt;
     
     private:
+    ClaveRSA &claveServidor;
     ContadorBloq &contador;
     MapaBloq &sujetosClaves;
 
     public:
-    HCertfcdor(Socket &sskt, ContadorBloq &contador, MapaBloq &mapa);
+    HCertfcdor(Socket &sskt, ContadorBloq &contador, 
+    MapaBloq &mapa, ClaveRSA &clave);
     ~HCertfcdor();
     virtual void run() override;
 };
