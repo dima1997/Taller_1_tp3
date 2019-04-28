@@ -1,5 +1,7 @@
 #include "hilos.h"
 #include "protocolo.h"
+#include "certificado.h"
+#include "error.h"
 
 /*
 PRE: Recibe un socket (Socket &) configurado para comunicarse 
@@ -11,8 +13,8 @@ POST: Se inicializa un hilo certificador.
 El socket recibido queda en estado nulo. 
 */
 HCertfcdor::HCertfcdor(Socket &skt, ContadorBloq &contador, MapaBloq &mapa,
-ClaveRSA &clave) : skt(std::move(skt)), contador(contador), sujetosClaves(mapa), 
-claveServidor(clave) {}
+ClaveRSA &clave) : skt(std::move(skt)), estaMuerto(false), claveServidor(clave),
+contador(contador), sujetosClaves(mapa) {}
 
 /*Destruye un Hilo Certificador*/
 HCertfcdor::~HCertfcdor(){}
@@ -21,13 +23,16 @@ HCertfcdor::~HCertfcdor(){}
 void HCertfcdor::run(){
     Protocolo proto(this->skt);
     //Recibo comando
-    uint8_t comando = 2;
+    uint8_t comando = 2; //Comando invalido
     proto.recibir_un_byte(comando);
     if (comando == 0){
         this->crear(proto);
-    } else if (comando == 1){
+    } 
+    if (comando == 1){
         this->revocar(proto);
     }
+    this->estaMuerto = true;
+    return;
 }
 
 /*
@@ -44,10 +49,10 @@ void HCertfcdor::crear(Protocolo &proto){
         ClaveRSA claveCliente = certif.getClave();
         if (! this->sujetosClaves.agregarSiNoEsta(sujeto, claveCliente)){
             // Ya tiene certificado vigente
-            proto.enviar_un_byte(1);
+            proto.enviar_bytes(1,1);
             return;
         }
-        proto.enviar_un_byte(0); 
+        proto.enviar_bytes(0,1); 
         certif.setNumeroSerie(this->contador++);
         std::string asunto = "Taller de programacion 1"; 
         certif.setAsunto(asunto);
@@ -55,16 +60,16 @@ void HCertfcdor::crear(Protocolo &proto){
         uint32_t hashCertif = certif.hashear();
         uint32_t huellaCertif = this->claveServidor.encriptar_privado(hashCertif);
         huellaCertif = claveCliente.encriptar_publico(huellaCertif);
-        proto.enviar_cuatro_bytes(huellaCertif);
+        proto.enviar_bytes(huellaCertif,4);
         uint8_t seRecibioCorrectamente;
         proto.recibir_un_byte(seRecibioCorrectamente);
+        if (seRecibioCorrectamente == 1){
+            //El cliente no recibio la huella correcta
+            this->sujetosClaves.borrar(sujeto);
+        }
     } catch (OSError &e){
         std::string err = "Error al crear certificado";
         throw OSError(err.data());
-    }
-    if (seRecibioCorrectamente == 1){
-        //El cliente no recibio la huella correcta
-        this->sujetosClaves.borrar(sujeto);
     }
     //Si recibo 0, no hago nada
     //Supongo que no voy a recibir ningun otro valor
@@ -79,18 +84,102 @@ certificado.
 */
 void HCertfcdor::revocar(Protocolo &proto){
     Certificado certif;
-    certif.recibir(proto);
-    uint32_t huellaCliente;
-    proto.recibir_cuatro_bytes(huellaCliente);
-    std::string sujeto = certif.getSujeto();
-    ClaveRSA claveCliente;
-    if (! this->sujetosClaves.obtenerSiEsta(sujeto, claveCliente)){
-        //El certificado no esta registrado.
-        proto.enviar_un_byte(1);
-        return;
+    try {
+        certif.recibir(proto);
+        uint32_t huellaCliente;
+        proto.recibir_cuatro_bytes(huellaCliente);
+        std::string sujeto = certif.getSujeto();
+        ClaveRSA claveCliente;
+        if (! this->sujetosClaves.obtenerSiEsta(sujeto, claveCliente)){
+            //El certificado no esta registrado.
+            proto.enviar_bytes(1,1);
+            return;
+        }
+        uint32_t hashCertif = certif.hashear();
+        uint32_t hashCliente; 
+        hashCliente = this->claveServidor.encriptar_privado(huellaCliente);
+        hashCliente = claveCliente.encriptar_publico(hashCliente);
+        if (hashCertif != hashCliente){
+            //Los hashes no coinciden
+            proto.enviar_bytes(2,1);
+            return;
+        }
+        this->sujetosClaves.borrar(sujeto);
+        proto.enviar_bytes(0,1);
+    } catch (OSError &e){
+        std::string err = "Error al revocar certificado";
+        throw OSError(err.data());
     }
-    uint32_t hashServidor; 
-    hashServidor = this->claveServidor.encriptar_privado(huellaCliente);
-    hashServidor = claveCliente.encriptar_publico(hashServidor);
-    //CONTINUARA...
+    return;
+}
+
+/*
+Devuelve true si el hilo ejecutor termino de 
+ejecutar, false en caso contrario
+*/
+bool HCertfcdor::is_dead(){
+    return  this->estaMuerto;
+}
+
+/*
+PRE: Recibe un socket (Socket &) configurado de forma pasiva
+para comunicarse escuchar clientes de cierto puerto, el 
+contador (ContadorBloq &) que indica que el proximo numero 
+de serie a ejecutar, un mapa (MapaBloq &) con los sujetos y 
+claves publicas asociadas de certificados creados, y las 
+claves (ClaveRSA &) del servidor.
+POST: Se inicializa un hilo aceptador.
+El Socket recibido queda en estado nulo.  
+*/
+HAceptador::HAceptador(Socket &skt, ContadorBloq &contador, 
+MapaBloq &mapa, ClaveRSA &claveSvr) : skt(std::move(skt)), 
+estaMuerto(false), contador(contador), sujetosClaves(mapa), 
+claveSvr(claveSvr) {}
+
+/*Destruye un hilo aceptador*/
+HAceptador::~HAceptador(){}
+
+/*Ejecuta un hilo aceptardor*/
+void HAceptador::run(){
+    std::vector<Thread*> hilos;
+    while (! this->estaMuerto){
+        Socket sktActivo = this->skt.aceptar(); //Aca podria saltar un error
+        HCertfcdor *hiloCertfcdor;
+        ContadorBloq &contador = this->contador;
+        MapaBloq &mapa = this->sujetosClaves; 
+        ClaveRSA &claveSvr = this->claveSvr;
+        hiloCertfcdor = new HCertfcdor(sktActivo, contador, mapa, claveSvr);
+        hiloCertfcdor->run();
+        hilos.push_back(hiloCertfcdor);
+        std::vector<Thread*> temp; //copia para iterar
+        for (size_t i = 0; i < hilos.size(); ++i){
+            if (hilos[i]->is_dead()){
+                hilos[i]->join();
+                delete hilos[i];
+            } else {
+                temp.push_back(hilos[i]);
+            }
+        }
+        hilos = std::move(temp);
+        //Ahora solo quedan los hilos que siguen vivos
+    }
+    for (size_t i = 0; i < hilos.size(); ++i){
+        hilos[i]->join();
+        delete hilos[i];
+    }
+    this->estaMuerto = true;
+    return;
+}
+
+/*
+Devuelve true si el hilo aceptador termino 
+de ejecutar, false en caso contrario.
+*/
+bool HAceptador::is_dead(){
+    return this->estaMuerto;
+}
+
+/*Le indica al hilo aceptardor que debe dejar ejecutarse*/
+void HAceptador::finalizar(){
+    this->estaMuerto = true;
 }
