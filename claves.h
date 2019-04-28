@@ -126,3 +126,4 @@ struct ClaveRSA{
 std::istream& operator>>(std::istream &in, ClaveRSA &clave);
 
 #endif // CLAVES_H
+

@@ -1,9 +1,11 @@
+#include <string>
+#include <vector>
 #include "certificado.h"
 #include "spliter.h"
 #include "error.h"
 #include "tiempo.h"
 
-#include <iostream> // solo para pruebas
+//#include <iostream> // solo para pruebas
 
 /*
 PRE: Recibe un entero sin signo de 4 bytes.
@@ -99,7 +101,7 @@ std::string Certificado::a_string() const{
     certificado += "\tserial number: " + std::to_string(this->numeroSerie); 
     certificado += " (" + a_hexa32_string(this->numeroSerie) + ")" + "\n"; 
     certificado += "\tsubject: " + this->sujeto + "\n";
-    certificado += "\tissuer: " + this->asunto + "\n"; //Taller de programacion 1
+    certificado += "\tissuer: " + this->asunto + "\n";
     certificado += "\t​validity:​\n";
     certificado += "\t\tnot before: " + this->inicio + "\n";
     certificado += "\t\tnot after: " + this->fin + "\n";
@@ -263,7 +265,6 @@ void Certificado::_procesar_linea(std::string &linea){
     //Cualquier otra cosa la ignoramos
     //Suponemos que el certificado no va a tener errores.
     return;
-
 } 
 
 /*
@@ -315,18 +316,20 @@ void Certificado::guardar(std::ostream &out) const {
     out << this->a_string();
 }
 
-/*Sobrecarga del operador >> de istream para clase ContadorBloq*/
+/*Sobrecarga del operador >> de istream para clase Certificado*/
 std::istream& operator>>(std::istream &in, Certificado &certif){
     certif.cargar(in);
     return in;
 }
 
-/*Sobrecarga del operador << de ostream para clase ContadorBloq*/
+/*Sobrecarga del operador << de ostream para clase Certificado*/
 std::ostream& operator<<(std::ostream &out, const Certificado &certif){
     certif.guardar(out);
     return out;
 }
 
+
+/*
 void prueba_certificado_guardar(){
     std::ofstream archCertificado;
     archCertificado.open("arch.cert");
@@ -342,7 +345,8 @@ void prueba_certificado_guardar(){
     archCertificado << certif;
     archCertificado.close();
 }
-
+*/
+/*
 void prueba_certificado_cargar(){
     std::ifstream archCertificado;
     archCertificado.open("arch.cert");
@@ -351,6 +355,7 @@ void prueba_certificado_cargar(){
     std::cout << certif;
     std::cout << "Sujeto es: " << certif.getSujeto() << "\n";
 }
+*/
 /*
 int main(){
     //prueba_certificado_guardar();

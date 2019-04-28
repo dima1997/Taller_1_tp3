@@ -31,12 +31,11 @@ class Protocolo {
     void _recibir(char *buffer, uint32_t largo, const char* err);
 
     public:
-
     /*
     PRE: Recibe una referencia al socket de comunicacion.
     POST: Inicializa un protocolo de comunicacion.
     */
-    Protocolo(Socket &skt);
+    explicit Protocolo(Socket &skt);
 
     /*Destruye el protocolo*/
     ~Protocolo();

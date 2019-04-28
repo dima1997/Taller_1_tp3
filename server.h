@@ -4,7 +4,6 @@
 
 class Servidor {
     public:
-    
     /*Inicializa un servidor*/
     Servidor();
     
@@ -20,7 +19,6 @@ class Servidor {
     POST: Ejecuta un servidor que crea y revoca certificados
     */
     void ejecutar(const char* puerto, const char* claves, const char* indice);
-    
 };
 
 #endif // SERVIDOR_H

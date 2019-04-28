@@ -1,3 +1,10 @@
+#include <fstream>
+#include <iostream>
+#include <string>
+#include "protocolo.h"
+#include "claves.h"
+#include "certificado.h"
+#include "error.h"
 #include "client.h"
 
 /*
@@ -13,34 +20,33 @@ Cliente::Cliente(const char *host, const char *puerto)
 Cliente::~Cliente(){}
 
 /*
-PRE: Recibe el nombre (std::string &) del archivo donde estan 
-las claves del cliente , el nombre (std::string &) del archivo 
-donde estan las claves publicas del servidor de la autoridad 
-certificante, y el nombre (std::string &) del archivo donde 
-esta la informacion para crear el certificado.
-POST: Devuelve true, si logro crear un certificado 
-correctamente, false en caso contrario.
+PRE: Recibe el nombre (const char *) del archivo donde esta 
+la informacion con la cual solicitar la creacion de un 
+certificado, del archivo con las claves del cliente, y el
+de la claves publicas del servidor.
+POST: Ejecuta el procedimiento para crear un certificado.
+Levanta OSError en caso de error.
 */
-bool Cliente::crear_certif(const char *infoCertif, const char *clvsClnt, 
-const char *clvsSvr){
+void Cliente::crear_certif(const char *nombreInfoCertif, 
+const char *nombreClavesClnt, const char *nombreClavesSvr){
     Certificado certif;
     
-    ifstream archInfo;
-    archInfo.open(infoCertif);
+    std::ifstream archInfo;
+    archInfo.open(nombreInfoCertif);
     certif.cargar(archInfo);
     archInfo.close();
 
     ClaveRSA clavesClnt;
-    ifstream archClavesCliente;
-    archClavesCliente.open(clvsCliente);
+    std::ifstream archClavesCliente;
+    archClavesCliente.open(nombreClavesClnt);
     archClavesCliente >> clavesClnt;
     archClavesCliente.close();
 
     certif.setClave(clavesClnt);
 
     ClaveRSA clavesSvr;
-    ifstream archClavesServidor;
-    archClavesServidor.open(clvsSvr);
+    std::ifstream archClavesServidor;
+    archClavesServidor.open(nombreClavesSvr);
     archClavesServidor >> clavesSvr;
     archClavesServidor.close();
     try {
@@ -54,14 +60,17 @@ const char *clvsSvr){
             return;
         }   
         certif.recibir(proto);
-        uint32_t huellaSvr;
-        proto.recibir_cuatro_bytes(huellaSvr);
-        std::cout << "Huella del servidor: " << std::to_string(huellaSvr) << "\n";
+        uint32_t huellaServidor;
+        proto.recibir_cuatro_bytes(huellaServidor);
+        std::cout << "Huella del servidor: ";
+        std::cout << std::to_string(huellaServidor) << "\n";
         uint32_t hashSvr = clavesClnt.encriptar_privado(huellaServidor);
         hashSvr = clavesSvr.encriptar_publico(hashSvr);
-        std::cout << "Hash del servidor: " << std::to_string(hashSvr) << "\n";
+        std::cout << "Hash del servidor: "; 
+        std::cout << std::to_string(hashSvr) << "\n";
         uint32_t hashCalculado = certif.hashear();
-        std::cout << "Hash calculado: " << std::to_string(hashCalculado) << "\n";
+        std::cout << "Hash calculado: "; 
+        std::cout << std::to_string(hashCalculado) << "\n";
         if (hashSvr != hashCalculado){
             proto.enviar_bytes(1,1);
             std::cout << "Error: los hashes no coinciden.\n";
@@ -80,34 +89,32 @@ const char *clvsSvr){
 }
 
 /*
-PRE: Recibe el nombre de 3 archivos (std::string): del archivo 
+PRE: Recibe el nombre de 3 archivos (const char *): del archivo 
 que contiene el certificado a revocar, del archivo que contiene las
 claves del cliente, del archivo que contiene las claves publicas
 del servidor.
-POST Devuelve true si lograr solicitar  al revocacion de su certificado,
-y obtener una respuesta del servidor esperada, ya se que se logro revocar,
-como que si no lo logro dado huellas que no coinciden o si el certificado
-no esta vigente; o false en caso de algun error excepcional.
+POST: Ejecuta el procedimiento para revocar un certificado.
+Levanta OSError en caso de error.
 */
-bool Cliente::revocar_certif(const char *nombreCertif, 
+void Cliente::revocar_certif(const char *nombreCertif, 
 const char *nombreClavesClnt, const char *nombreClavesSvr){
     Certificado certif;
     
-    ifstream archCertif;
+    std::ifstream archCertif;
     archCertif.open(nombreCertif);
     archCertif >> certif;
     archCertif.close();
 
     ClaveRSA clavesClnt;
 
-    ifstream archClavesClnt;
+    std::ifstream archClavesClnt;
     archClavesClnt.open(nombreClavesClnt);
     archClavesClnt >> clavesClnt;
     archClavesClnt.close();
 
     ClaveRSA clavesSvr;
 
-    ifstream archClavesSvr;
+    std::ifstream archClavesSvr;
     archClavesSvr.open(nombreClavesSvr);
     archClavesSvr >> clavesSvr;
     archClavesSvr.close();
@@ -152,16 +159,14 @@ int main(int argc, const char* argv[]){
         const char *puerto = argv[2];
         Cliente cliente(host, puerto);
         
-        const char *comando = argv[3];
+        std::string comando = argv[3];
         const char *nombreCertif = argv[4];
         const char *nombreClvClnt = argv[5];
         const char *nombreClvSvr = argv[6];
 
         if (comando == "new"){
-            //./client localhost 2000 new certificate.req client.keys serverPublic.keys
             cliente.crear_certif(nombreCertif, nombreClvClnt, nombreClvSvr);
         } else if (comando == "revoke"){
-            //./client localhost 2000 revoke “Federico Manuel Gomez Peter.cert” client.keys serverPublic.keys
             cliente.revocar_certif(nombreCertif, nombreClvClnt, nombreClvSvr);
         } else {
             std::cout << "Error: argumentos invalidos.\n";   

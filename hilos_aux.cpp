@@ -1,9 +1,10 @@
 #include <iostream>
 #include <fstream>
 #include <mutex>
+#include <string>
 #include <vector>
-#include "hilos_aux.h"
 #include "spliter.h"
+#include "hilos_aux.h"
 
 /*
 Crea un mapa bloqueante ordenado alfabeticamente, 
@@ -88,7 +89,6 @@ void MapaBloq::cargar(std::istream& in) {
         this->agregarSiNoEsta(sujeto,clave);
     }
 }
-  
 
 /*
 PRE: Recibe un flujo de salida (ostream &out).
@@ -120,12 +120,14 @@ std::ostream& operator<<(std::ostream &out, const MapaBloq &mapa){
     return out;
 }
 
+/*
 void pruebas_mapa_agregar_obtener(){
     MapaBloq mapa;
     std::string sujeto1 = "sujeto 1";
     ClaveRSA clave(1,2,3);
     bool seAgrego = mapa.agregarSiNoEsta(sujeto1, clave);
-    std::cout << "Agrego al mapa: " << sujeto1 << " con clave rsa: " << clave.a_string() << ".\n";
+    std::cout << "Agrego al mapa: " << sujeto1; 
+    std::cout << " con clave rsa: " << clave.a_string() << ".\n";
     std::cout << "seAgrego es true (1) : " << seAgrego << "\n";
     
     ClaveRSA claveObtenida;
@@ -133,35 +135,42 @@ void pruebas_mapa_agregar_obtener(){
     std::cout << "seObtuvo es true (1) : " << seObtuvo << "\n";
     std::cout << "La clave obtenida es: " << claveObtenida.a_string() << "\n";
     std::cout << "Los atributos de la clave obtenida son correctos ?:\n"; 
-    std::cout << "expPublico == 1: (1)" << (claveObtenida.expPublico == 1) << "\n";
-    std::cout << "expPrivado == 2: (1)" << (claveObtenida.expPrivado == 2) << "\n";
+    std::cout << "expPublico == 1: (1)"; 
+    std::cout << (claveObtenida.expPublico == 1) << "\n";
+    std::cout << "expPrivado == 2: (1)";
+    std::cout << (claveObtenida.expPrivado == 2) << "\n";
     std::cout << "modulo == 3: (1)" << (claveObtenida.modulo == 3) << "\n";
     
     ClaveRSA otraClave(4,5,6);
     seAgrego = mapa.agregarSiNoEsta(sujeto1, otraClave);
-    std::cout << "Se intenta agregar al mapa: " << sujeto1 << " con otra clave rsa: ";
+    std::cout << "Se intenta agregar al mapa: ";
+    std::cout << sujeto1 << " con otra clave rsa: ";
     std::cout << otraClave.a_string() << "\n";
     std::cout << "seAgrego es false (0)? : " << seAgrego << "\n";
     
     seObtuvo = mapa.obtenerSiEsta(sujeto1, claveObtenida);
     std::cout << "seObtuvo es true (1) : " << seObtuvo << "\n";
     std::cout << "La clave obtenida es: " << claveObtenida.a_string() << "\n";
-    std::cout << "Los atributos de la clave obtenida siguen siendo los anteriores ?:\n"; 
-    std::cout << "expPublico == 1: (1)" << (claveObtenida.expPublico == 1) << "\n";
-    std::cout << "expPrivado == 2: (1)" << (claveObtenida.expPrivado == 2) << "\n";
+    std::cout << "Los atributos de la clave "; 
+    std::cout << "obtenida siguen siendo los anteriores ?:\n"; 
+    std::cout << "expPublico == 1: (1)";
+    std::cout << (claveObtenida.expPublico == 1) << "\n";
+    std::cout << "expPrivado == 2: (1)";
+    std::cout << (claveObtenida.expPrivado == 2) << "\n";
     std::cout << "modulo == 3: (1)" << (claveObtenida.modulo == 3) << "\n";
 }
-
+*/
+/*
 void prueba_mapa_guardar(){
     MapaBloq mapa;
     ClaveRSA clave1(1,2,3);
     ClaveRSA clave2(4,5,6);
     std::string sujetoA = "A Sujeto";
     std::string sujetoB = "B Sujeto";
-    std::cout << "Agrego: " << sujetoB << " con clave: " ;
+    std::cout << "Agrego: " << sujetoB << " con clave: ";
     std::cout << clave2.a_string_publica() << "\n";
     mapa.agregarSiNoEsta(sujetoB, clave2);
-    std::cout << "Agrego: " << sujetoA << " con clave: " ;
+    std::cout << "Agrego: " << sujetoA << " con clave: ";
     std::cout << clave1.a_string_publica() << "\n";
     mapa.agregarSiNoEsta(sujetoA, clave1);
     std::cout << "Guardo mapa en index_prueba.txt\n";
@@ -171,7 +180,8 @@ void prueba_mapa_guardar(){
     archIndice << mapa;
     archIndice.close();
 }
-
+*/
+/*
 void prueba_mapa_cargar(){
     MapaBloq mapa;
     std::ifstream archIndice;
@@ -183,12 +193,13 @@ void prueba_mapa_cargar(){
     std::string sujetoB = "B Sujeto";
     bool seObtuvo = false;
     seObtuvo = mapa.obtenerSiEsta(sujetoA, claveObten);
-    std::cout << "Se obtuvo: " << sujetoA << "(1): " << seObtuvo; ;
+    std::cout << "Se obtuvo: " << sujetoA << "(1): " << seObtuvo;
     std::cout << " con clave: " << claveObten.a_string_publica() << "\n";
     seObtuvo = mapa.obtenerSiEsta(sujetoB, claveObten);
-    std::cout << "Se obtuvo: " << sujetoB << "(1): " << seObtuvo; ;
+    std::cout << "Se obtuvo: " << sujetoB << "(1): " << seObtuvo;
     std::cout << " con clave: " << claveObten.a_string_publica() << "\n";
 }
+*/
 
 // tda ContadorBloq
 
@@ -199,7 +210,7 @@ ContadorBloq::ContadorBloq() : cuenta(0){}
 ContadorBloq::~ContadorBloq(){}
 
 /*Suma 1 al contador y devuelve el valor anterior (uint32_t).*/
-uint32_t ContadorBloq::operator++(int){
+uint32_t ContadorBloq::obtener_y_sumar_uno(){
     std::lock_guard<std::mutex> lock(this->centinela);
     uint32_t valorAnterior = this->cuenta;
     this->cuenta += 1;
@@ -246,12 +257,14 @@ std::ostream& operator<<(std::ostream &out, const ContadorBloq &contador){
     return out;
 }
 
+/*
 void prueba_contador(){
     ContadorBloq contador;
     std::cout << "Creo contador.\n";
     std::cout << "Contador++ == 0: (1)" << (contador++ == 0) << "\n";
 }
-
+*/
+/*
 void prueba_contador_guardar(){
     std::ofstream archIndice;
     archIndice.open("indice_pruebas.txt");
@@ -262,7 +275,8 @@ void prueba_contador_guardar(){
     archIndice.close();
     std::cout << "Se guardo en indice_pruebas.txt un 2.\n";
 }
-
+*/
+/*
 void prueba_contador_cargar(){
     std::ifstream archIndice;
     archIndice.open("indice_pruebas.txt");
@@ -273,6 +287,7 @@ void prueba_contador_cargar(){
     std::cout << "contador++ == 2: (1)" << (contador++ == 2) << "\n";
 
 }
+*/
 /*
 int main(){
     //pruebas_mapa();

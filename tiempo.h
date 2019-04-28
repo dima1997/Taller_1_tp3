@@ -1,3 +1,6 @@
+#ifndef TIEMPO_H
+#define TIEMPO_H
+#include <string>
 class Tiempo {
     public:
     //struct tm *tiempo;
@@ -26,3 +29,5 @@ class Tiempo {
     */
     std::string representar();
 };
+
+#endif // TIEMPO_H

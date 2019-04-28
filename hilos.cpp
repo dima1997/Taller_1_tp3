@@ -1,7 +1,9 @@
-#include "hilos.h"
+#include <string>
+#include <vector>
 #include "protocolo.h"
 #include "certificado.h"
 #include "error.h"
+#include "hilos.h"
 
 /*
 PRE: Recibe un socket (Socket &) configurado para comunicarse 
@@ -53,12 +55,13 @@ void HCertfcdor::crear(Protocolo &proto){
             return;
         }
         proto.enviar_bytes(0,1); 
-        certif.setNumeroSerie(this->contador++);
+        certif.setNumeroSerie(this->contador.obtener_y_sumar_uno());
         std::string asunto = "Taller de programacion 1"; 
         certif.setAsunto(asunto);
         certif.enviar(proto);
         uint32_t hashCertif = certif.hashear();
-        uint32_t huellaCertif = this->claveServidor.encriptar_privado(hashCertif);
+        uint32_t huellaCertif;
+        huellaCertif = this->claveServidor.encriptar_privado(hashCertif);
         huellaCertif = claveCliente.encriptar_publico(huellaCertif);
         proto.enviar_bytes(huellaCertif,4);
         uint8_t seRecibioCorrectamente;

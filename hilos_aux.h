@@ -1,8 +1,9 @@
 #ifndef HILOS_AUX_H
 #define HILOS_AUX_H
-#include "claves.h"
+#include <string>
 #include <mutex>
 #include <map>
+#include "claves.h"
 
 typedef std::map<std::string,ClaveRSA> mapaStrRSA_t;
 
@@ -82,7 +83,7 @@ class ContadorBloq {
     Suma 1 al contador y devuelve el valor anterior 
     como un entero sin signo de 4 bytes(uint32_t).
     */
-    uint32_t operator++(int);
+    uint32_t obtener_y_sumar_uno();
 
     /*
     PRE: Recibe un flujo de salida (ostream &).

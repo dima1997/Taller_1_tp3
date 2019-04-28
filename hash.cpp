@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <string>
 #include "hash.h"
 
 //TDA Hash

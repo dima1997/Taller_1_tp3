@@ -1,3 +1,8 @@
+#include <time.h>
+#include <string>
+#include "tiempo.h"
+
+
 /*Inicializa el tiempo en el horario actual.*/
 Tiempo::Tiempo(){
     time(&this->tiempo);
@@ -39,8 +44,9 @@ PRE: Recibe una cantidad (size_t) de dias a sumar.
 POST: Suma la cantidad recibida al tiempo actual
 */
 void Tiempo::sumar_dias(size_t dias){
-    struct tm *tiempoInfo;
-    tiempoInfo = gmtime(&this->tiempo);
+    struct tm tiempoInfo; //*
+    //tiempoInfo = gmtime(&this->tiempo);
+    gmtime_r(&this->tiempo, &tiempoInfo);
     /*
     size_t diasMesMaximo = this->cuantos_dias_mes();
     size_t diasActuales = tiempoInfo->tm_mday;
@@ -66,8 +72,9 @@ MM DD hh:mm:ss YYYY
 */
 std::string Tiempo::representar(){
     std::string representacion;
-    struct tm *tiempoInfo;
-    tiempoInfo = gmtime(&this->tiempo);
+    struct tm tiempoInfo; //*
+    //tiempoInfo = gmtime(&this->tiempo);
+    gmtime_r(&this->tiempo, &tiempoInfo);
     char tiempoBuff[LARGO_TIEMPO_MAXIMO]; //+1
     strftime(tiempoBuff, sizeof(tiempoBuff), "%b %d %T %Y", tiempoInfo);
     representacion = tiempoInfo;

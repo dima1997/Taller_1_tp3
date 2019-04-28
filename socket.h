@@ -12,7 +12,7 @@ class Socket{
     POST: Inicializa un socket con dicho 
     codigo.
     */
-    Socket(int skt);
+    explicit Socket(int skt);
         
     public:
     /*
@@ -62,7 +62,7 @@ class Socket{
     nombre recibido. 
     Levanta OSError en caso de error de enlazamiento.
     */
-    Socket(const char *puerto);
+    explicit Socket(const char *puerto);
 
     /*
     Metodo para Servidor.

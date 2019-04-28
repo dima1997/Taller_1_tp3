@@ -154,4 +154,11 @@ class Certificado {
     */
     void guardar(std::ostream &out) const;
 };
-#endif // CERTIFICADO_H 
+
+/*Sobrecarga del operador >> de istream para clase Certificado*/
+std::istream& operator>>(std::istream &in, Certificado &certif);
+
+/*Sobrecarga del operador << de ostream para clase Certificado*/
+std::ostream& operator<<(std::ostream &out, const Certificado &certif);
+
+#endif // CERTIFICADO_H
