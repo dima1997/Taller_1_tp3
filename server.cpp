@@ -1,11 +1,11 @@
 #include <fstream>
 #include <iostream>
+#include "common_socket.h"
+#include "common_claves.h"
+#include "common_error.h"
+#include "server_hilos.h"
+#include "server_hilos_aux.h"
 #include "server.h"
-#include "socket.h"
-#include "hilos.h"
-#include "hilos_aux.h"
-#include "claves.h"
-#include "error.h"
 
 /*Inicializa un servidor*/
 Servidor::Servidor(){}

@@ -1,6 +1,6 @@
 #ifndef CLIENTE_H
 #define CLIENTE_H
-#include "socket.h"
+#include "common_socket.h"
 class Cliente {
     public:
     Socket skt;

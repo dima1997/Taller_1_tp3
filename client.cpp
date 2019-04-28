@@ -1,10 +1,10 @@
 #include <fstream>
 #include <iostream>
 #include <string>
-#include "protocolo.h"
-#include "claves.h"
-#include "certificado.h"
-#include "error.h"
+#include "common_protocolo.h"
+#include "common_claves.h"
+#include "common_certificado.h"
+#include "common_error.h"
 #include "client.h"
 
 /*
