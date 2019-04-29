@@ -126,7 +126,7 @@ const char *nombreClavesClnt, const char *nombreClavesSvr){
         std::cout << "Hash calculado: ";
         std::cout << std::to_string(huellaCliente) << "\n";
         huellaCliente = clavesClnt.encriptar_privado(huellaCliente);
-        std::cout << "Hash encriptado con clave privada: ";
+        std::cout << "Hash encriptado con la clave privada: ";
         std::cout << std::to_string(huellaCliente) << "\n";
         huellaCliente = clavesSvr.encriptar_publico(huellaCliente);
         std::cout << "Huella enviada: ";
