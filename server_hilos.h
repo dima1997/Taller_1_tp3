@@ -25,9 +25,18 @@ class Thread {
         thread.join();
     }
         
-    /*Ejecuta la funcion del Thread*/
+    /*Ejecuta la funcion del hilo*/
     virtual void run() = 0;
-        
+
+    /*Detiene la ejecucion del hilo*/
+    virtual void stop() = 0;
+    
+    /*
+    Devuelve true si el hilo termino de ejectarse, 
+    false en caso contrario
+    */
+    virtual bool is_dead() = 0;
+
     /*Destruye el Thread*/
     virtual ~Thread() {}
         
@@ -53,11 +62,9 @@ class Thread {
         this->thread = std::move(other.thread);
         return *this;
     }
-
-    virtual bool is_dead() = 0;
 };
 
-class HCertfcdor : public Thread {
+class HCertificador : public Thread {
     public:
     Socket skt;
     
@@ -77,16 +84,22 @@ class HCertfcdor : public Thread {
     POST: Se inicializa un hilo certificador. 
     El socket recibido queda en estado nulo. 
     */
-    HCertfcdor(Socket &skt, ContadorBloq &contador, 
+    HCertificador(Socket &skt, ContadorBloq &contador, 
     MapaBloq &mapa, ClaveRSA &clave);
     
     /*Destruye un Hilo Certificador*/
-    ~HCertfcdor();
+    ~HCertificador();
 
-    /*Ejecuta el hilo certificador*/
+    /*Ejecuta el hilo*/
     virtual void run() override;
+
+    /*Detiene la ejecucion del hilo*/
+    virtual void stop() override;
     
-    /*Devuelve true si el hilo certificador termino de ejecutar*/
+    /*
+    Devuelve true si el hilo  termino de ejecutar, 
+    false en caso contrario.
+    */
     virtual bool is_dead() override;
 
     /*
@@ -129,11 +142,14 @@ class HAceptador : public Thread {
     /*Ejecuta el hilo aceptador*/
     virtual void run() override;
     
-    /*Devuelve true si el hilo aceptador termino de ejecutar*/
-    virtual bool is_dead() override;
+    /*Detiene la ejecucion del hilo*/
+    virtual void stop() override;
 
-    /*Le indica al hilo aceptardor que debe dejar ejecutarse*/
-    void stop();
+    /*
+    Devuelve true si el hilo aceptador termino de ejecutar, 
+    false en caso contrario.
+    */
+    virtual bool is_dead() override;
 };
 
 #endif //HILO_CERTIFICADOR_H

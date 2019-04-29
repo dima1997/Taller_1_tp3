@@ -14,15 +14,15 @@ creados, y su valores asociados sean sus claves rsa publicas.
 POST: Se inicializa un hilo certificador. 
 El socket recibido queda en estado nulo. 
 */
-HCertfcdor::HCertfcdor(Socket &skt, ContadorBloq &contador, MapaBloq &mapa,
-ClaveRSA &clave) : skt(std::move(skt)), estaMuerto(false), claveServidor(clave),
-contador(contador), sujetosClaves(mapa) {}
+HCertificador::HCertificador(Socket &skt, ContadorBloq &contador, 
+MapaBloq &mapa, ClaveRSA &clave) : skt(std::move(skt)), estaMuerto(false), 
+claveServidor(clave), contador(contador), sujetosClaves(mapa) {}
 
 /*Destruye un Hilo Certificador*/
-HCertfcdor::~HCertfcdor(){}
+HCertificador::~HCertificador(){}
 
 /*Ejecuta el hilo certificador*/
-void HCertfcdor::run(){
+void HCertificador::run(){
     Protocolo proto(this->skt);
     uint8_t comando = proto.recibir_un_byte(); 
     if (comando == 0){
@@ -41,7 +41,7 @@ un cliente entrante.
 POST: Ejecuta el procedimiento para la creacion de un 
 certificado.
 */
-void HCertfcdor::crear(Protocolo &proto){
+void HCertificador::crear(Protocolo &proto){
     Certificado certif;
     try {
         certif.recibir_parametros(proto);
@@ -82,7 +82,7 @@ un cliente entrante.
 POST: Ejecuta el procedimiento para la revocacion de un 
 certificado.
 */
-void HCertfcdor::revocar(Protocolo &proto){
+void HCertificador::revocar(Protocolo &proto){
     Certificado certif;
     try {
         certif.recibir(proto);
@@ -116,8 +116,14 @@ void HCertfcdor::revocar(Protocolo &proto){
 Devuelve true si el hilo ejecutor termino de 
 ejecutar, false en caso contrario
 */
-bool HCertfcdor::is_dead(){
-    return  this->estaMuerto;
+bool HCertificador::is_dead(){
+    return this->estaMuerto;
+}
+
+/*Detiene la ejecucion del hilo*/
+void HCertificador::stop(){
+    //No hace nada
+    //El hilo termina su ejecucion por si solo 
 }
 
 /*
@@ -145,17 +151,17 @@ void HAceptador::run(){
         Socket sktActivo;
         try {
             sktActivo = this->skt.aceptar();
-        } catch (OSError &e){
+        } catch (OSError &error){
             //O bien se corto desde afuera y debo salir
             //O bien ocurrio un error y debo terminar 
             //la ejecucion del hilo
             break;
         }
-        HCertfcdor *hiloCertfcdor;
+        HCertificador *hiloCertfcdor;
         ContadorBloq &contador = this->contador;
         MapaBloq &mapa = this->sujetosClaves; 
         ClaveRSA &claveSvr = this->claveSvr;
-        hiloCertfcdor = new HCertfcdor(sktActivo, contador, mapa, claveSvr);
+        hiloCertfcdor = new HCertificador(sktActivo, contador, mapa, claveSvr);
         hiloCertfcdor->start();
         hilos.push_back(hiloCertfcdor);
         std::vector<Thread*> temp; //aux para iterar
@@ -186,9 +192,9 @@ bool HAceptador::is_dead(){
     return this->estaMuerto;
 }
 
-/*Le indica al hilo aceptardor que debe dejar ejecutarse*/
+/*Detiene la ejecucion del hilo*/
 void HAceptador::stop(){
     this->estaMuerto = true;
-    this->skt.cerrar_canal(2); //SHUT_RDWR
+    this->skt.cerrar_canal(CERRAR_TODO);
     this->skt.cerrar();
 }

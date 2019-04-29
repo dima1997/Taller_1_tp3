@@ -144,32 +144,36 @@ Levanta OSError en caso de error.
 */
 void Cliente::crear_certif(const char *nombreInfoCertif, 
 const char *nombreClavesClnt, const char *nombreClavesSvr){
-    //habra que hacer std::move tambien al recibir ?
-    Certificado certif = this->cargar_info(nombreInfoCertif);
-    ClaveRSA clavesClnt = this->cargar_claves(nombreClavesClnt);
-    certif.setClave(clavesClnt);
-    ClaveRSA clavesSvr = this->cargar_claves(nombreClavesSvr);
-    Protocolo proto(this->skt);
-    proto.enviar_bytes(0,1);
-    certif.enviar_parametros(proto);
-    uint8_t respuesta = proto.recibir_un_byte();
-    if (respuesta == 1){
-        std::cout << "Error: ya existe un certificado.\n";
-        return;
-    }   
-    certif.recibir(proto);
-    uint32_t huellaSvr = proto.recibir_cuatro_bytes();
-    uint32_t hashSvr;
-    hashSvr = this->desencrip_imprimir_huella_svr(huellaSvr, 
-        clavesClnt, clavesSvr);
-    uint32_t hashCalculado = this->calcular_imprimir_hash(certif);
-    if (hashSvr != hashCalculado){
-        proto.enviar_bytes(1,1);
-        std::cout << "Error: los hashes no coinciden.\n";
-        return;
+    try {
+        Certificado certif = this->cargar_info(nombreInfoCertif);
+        ClaveRSA clavesClnt = this->cargar_claves(nombreClavesClnt);
+        certif.setClave(clavesClnt);
+        ClaveRSA clavesSvr = this->cargar_claves(nombreClavesSvr);
+        Protocolo proto(this->skt);
+        proto.enviar_bytes(0,1);
+        certif.enviar_parametros(proto);
+        uint8_t respuesta = proto.recibir_un_byte();
+        if (respuesta == 1){
+            std::cout << "Error: ya existe un certificado.\n";
+            return;
+        }   
+        certif.recibir(proto);
+        uint32_t huellaSvr = proto.recibir_cuatro_bytes();
+        uint32_t hashSvr;
+        hashSvr = this->desencrip_imprimir_huella_svr(huellaSvr, 
+            clavesClnt, clavesSvr);
+        uint32_t hashCalculado = this->calcular_imprimir_hash(certif);
+        if (hashSvr != hashCalculado){
+            proto.enviar_bytes(1,1);
+            std::cout << "Error: los hashes no coinciden.\n";
+            return;
+        }
+        proto.enviar_bytes(0,1);
+        this->guardar_certif(certif);
+    } catch (OSError &error){
+        std::string err = "Error al crear certificado.";
+        throw OSError(__FILE__,__LINE__,err.data());
     }
-    proto.enviar_bytes(0,1);
-    this->guardar_certif(certif);
 }
 
 /*
@@ -181,28 +185,33 @@ POST: Ejecuta el procedimiento para revocar un certificado.
 Levanta OSError en caso de error.
 */
 void Cliente::revocar_certif(const char *nombreCertif, 
-const char *nombreClavesClnt, const char *nombreClavesSvr){   
-    Certificado certif = this->cargar_certif(nombreCertif);
-    ClaveRSA clavesClnt = this->cargar_claves(nombreClavesClnt);
-    ClaveRSA clavesSvr = this->cargar_claves(nombreClavesSvr);
-    Protocolo proto(this->skt);
-    proto.enviar_bytes(1,1);
-    certif.enviar(proto);
-    uint32_t hashClnt = this->calcular_imprimir_hash(certif);
-    uint32_t huellaCliente;
-    huellaCliente = this->encrip_imprimir_hash_clnt(hashClnt, 
-        clavesClnt, clavesSvr);
-    proto.enviar_bytes(huellaCliente, 4);
-    uint8_t respuesta = proto.recibir_un_byte();
-    if (respuesta == 1){
-        //No hay certificado registrado
-        std::cout << "Error: usuario no registrado.\n";
-        return;
-    }
-    if (respuesta == 2){
-        //Los hashes no coinciden
-        std::cout << "Error: los hashes no coinciden.\n";
-        return;
+const char *nombreClavesClnt, const char *nombreClavesSvr){
+    try {
+        Certificado certif = this->cargar_certif(nombreCertif);
+        ClaveRSA clavesClnt = this->cargar_claves(nombreClavesClnt);
+        ClaveRSA clavesSvr = this->cargar_claves(nombreClavesSvr);
+        Protocolo proto(this->skt);
+        proto.enviar_bytes(1,1);
+        certif.enviar(proto);
+        uint32_t hashClnt = this->calcular_imprimir_hash(certif);
+        uint32_t huellaCliente;
+        huellaCliente = this->encrip_imprimir_hash_clnt(hashClnt, 
+            clavesClnt, clavesSvr);
+        proto.enviar_bytes(huellaCliente, 4);
+        uint8_t respuesta = proto.recibir_un_byte();
+        if (respuesta == 1){
+            //No hay certificado registrado
+            std::cout << "Error: usuario no registrado.\n";
+            return;
+        }
+        if (respuesta == 2){
+            //Los hashes no coinciden
+            std::cout << "Error: los hashes no coinciden.\n";
+            return;
+        }
+    } catch (OSError &error){
+        std::string err = "Error al revocar certificado.";
+        throw OSError(__FILE__,__LINE__,err.data());
     }
 }
 
@@ -227,7 +236,7 @@ int main(int argc, const char* argv[]){
         } else {
             std::cout << "Error: argumentos invalidos.\n";   
         }
-    } catch (OSError &e){
+    } catch (OSError &error){
         return 1;
     }
     return 0;

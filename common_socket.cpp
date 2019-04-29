@@ -176,20 +176,20 @@ Socket Socket::aceptar(){
 }
     
 /*
-PRE: Recibe el modo en que se desea cerrar al socket:
-SHUT_RD: 0,
-SHUT_WR: 1,
-SHUT_RDWR: 2
+PRE: Recibe el modo (ModoCierre) en que se desea cerrar al socket:
+ModoCierre.CERRAR_LECTURA,
+ModoCierre.CERRAR_ESCRITURA,
+ModoCierre.CERRAR_TODO,
 POST: Cierra el socket. 
 */
-void Socket::cerrar_canal(int modoCierre){
-    if (modoCierre == 0){
+void Socket::cerrar_canal(ModoCierre modoCierre){
+    if (modoCierre == CERRAR_LECTURA){
         shutdown(this->skt, SHUT_RD);
     }
-    if (modoCierre == 1){
+    if (modoCierre == CERRAR_ESCRITURA){
         shutdown(this->skt, SHUT_WR);
     }
-    if (modoCierre == 2){
+    if (modoCierre == CERRAR_TODO){
         shutdown(this->skt, SHUT_RDWR);
     }
 }
@@ -247,7 +247,7 @@ int Socket::recibir_algo(char *buffer, size_t largo){
         size_t largoMaximo = largoBuff - bytesRecibidos; 
         estado = recv(this->skt, &buffer[i], largoMaximo, MSG_NOSIGNAL);
         if (estado < 0) {
-            throw OSError(__FILE__,__LINE__,"Error al enviar mensaje.");
+            throw OSError(__FILE__,__LINE__,"Error al recibir mensaje.");
         } else if (estado == 0) {
             //Dejamos que esto se maneje desde afuera.
             seguirRecibiendo = false;

@@ -80,8 +80,9 @@ class Cliente {
     PRE: Recibe un hash del cliente (uint32_t), las claves
     (ClaveRSA) del cliente y la publica del servidor.
     POST: Encripta el hash recibido y lo imprime en el proceso:
-    "Hash encriptado con la clave privada: <hash encriptado con clave...>"
-    "Huella enviada : <hash completamente encriptado>"
+    "Hash encriptado con la clave privada: <hash encriptado 
+    con la clave privada>\n"
+    "Huella enviada : <hash completamente encriptado>\n"
     */
     uint32_t encrip_imprimir_hash_clnt(uint32_t hashClnt,
     ClaveRSA &clvClnt, ClaveRSA &clvSvr);

@@ -2,6 +2,12 @@
 #define SOCKET_H
 #include <cstring>
 
+enum ModoCierre{
+    CERRAR_LECTURA,
+    CERRAR_ESCRITURA,
+    CERRAR_TODO,
+};
+
 class Socket{
     public:
     int skt;
@@ -78,13 +84,13 @@ class Socket{
     Socket aceptar();
 
     /*
-    PRE: Recibe el modo en que se desea cerrar al socket:
-    SHUT_RD: 0,
-    SHUT_WR: 1,
-    SHUT_RDWR: 2
+    PRE: Recibe el modo (ModoCierre) en que se desea cerrar al socket:
+    ModoCierre.CERRAR_LECTURA,
+    ModoCierre.CERRAR_ESCRITURA,
+    ModoCierre.CERRAR_TODO,
     POST: Cierra el socket. 
     */
-    void cerrar_canal(int modoCierre);
+    void cerrar_canal(ModoCierre modoCierre);
     
     /*Cierra el socket*/
     void cerrar();
