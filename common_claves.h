@@ -2,8 +2,9 @@
 #define CLAVES_H
 #include <cstdint>
 #include <string>
+#include "common_archivable.h"
 
-struct ClaveRSA{
+struct ClaveRSA : public Archivable{
     public:
     uint8_t expPublico;
     uint8_t expPrivado;
@@ -101,7 +102,7 @@ struct ClaveRSA{
     uint32_t encriptar_privado(uint32_t valor);
 
     /*
-    PRE: Recibe el nombre de un flujo de entrada (std::istream &) 
+    PRE: Recibe un flujo de entrada (std::istream &) 
     que contiene las claves publicas y/o privadas de una entidad, 
     de la forma:
     <exponente-publico> <exponente-privado> <modulo>
@@ -111,6 +112,14 @@ struct ClaveRSA{
     encontrados en el archivo.
     */
     void cargar(std::istream &in);
+
+    /*
+    PRE: Recibe un flujo de salida (std::ostream &).
+    POST: Escribe la representacion completa de la clave
+    en el flujo:
+    <exponente publico> <exponente privado> <modulo>
+    */
+    void guardar(std::ostream &out) const;
 
     /*
     Devuelve el exponente publico (uint8_t) de 
@@ -124,6 +133,9 @@ struct ClaveRSA{
 
 /*Sobrecarga del operador >> para ClaveRSA*/
 std::istream& operator>>(std::istream &in, ClaveRSA &clave);
+
+/*Sobrecarga del operador << para ClaveRSA*/
+std::ostream& operator<<(std::ostream &out, ClaveRSA &clave);
 
 #endif // CLAVES_H
 

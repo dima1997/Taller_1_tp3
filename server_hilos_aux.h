@@ -4,10 +4,11 @@
 #include <mutex>
 #include <map>
 #include "common_claves.h"
+#include "common_archivo.h"
 
 typedef std::map<std::string,ClaveRSA> mapaStrRSA_t;
 
-class MapaBloq {
+class MapaBloq : public Archivable {
     public:
     mapaStrRSA_t mapa;
     mutable std::mutex centinela;
@@ -69,7 +70,7 @@ std::istream& operator>>(std::istream &in, MapaBloq &mapa);
 /*Sobrecarga del operador << de ostream para clase MapaBloq*/
 std::ostream& operator<<(std::ostream &out, const MapaBloq &mapa);
 
-class ContadorBloq {
+class ContadorBloq : public Archivable {
     public:
     uint32_t cuenta;
     mutable std::mutex centinela;

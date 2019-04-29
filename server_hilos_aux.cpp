@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include "common_spliter.h"
+#include "common_archivable.h"
 #include "server_hilos_aux.h"
 
 /*

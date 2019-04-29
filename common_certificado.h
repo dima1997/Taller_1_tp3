@@ -5,6 +5,7 @@
 #include <fstream>
 #include "common_protocolo.h"
 #include "common_claves.h"
+#include "common_archivable.h"
 
 /*
 PRE: Recibe un entero sin signo de 4 bytes.
@@ -20,7 +21,6 @@ hexagesimal del valor recibido.
 */
 std::string a_hexa16_string(const uint16_t &valor);
 
-
 /*
 PRE: Recibe un entero sin signo de 1 bytes.
 POST: Devuelve una representacion (std::string) 
@@ -28,7 +28,7 @@ hexagesimal del valor recibido.
 */
 std::string a_hexa8_string(const uint8_t &valor);
 
-class Certificado {
+class Certificado : public Archivable {
     public:
     uint32_t numeroSerie;
     std::string asunto;
@@ -52,6 +52,24 @@ class Certificado {
 
     /*Destruye un certificado*/
     ~Certificado();
+
+    /*
+    PRE: Recibe una doble referencia a otro certificado
+    (Certificado &&).
+    POST: Construye un nuevo certificado por movimiento 
+    semantico de los atributos del recibido.
+    El certificado recibidido queda en estado nulo 
+    */
+    Certificado(Certificado &&otroCertif);
+
+    /*
+    PRE: Recibe una doble referencia a otro certificado
+    (Certificado &&).
+    POST: Mueve semanticamente todos los atributos del certificado
+    recibido al actual.
+    El certificado recibido queda en estado nulo. 
+    */
+    Certificado& operator=(Certificado &&otroCertif);
 
     /*
     PRE: Recibe un numero serie (uint32_t).

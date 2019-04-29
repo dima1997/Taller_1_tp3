@@ -5,6 +5,7 @@
 #include "common_claves.h"
 #include "common_certificado.h"
 #include "common_error.h"
+#include "common_archivo.h"
 #include "client.h"
 
 /*
@@ -20,6 +21,120 @@ Cliente::Cliente(const char *host, const char *puerto)
 Cliente::~Cliente(){}
 
 /*
+PRE: Recibe el nombre de un archivo que contiene informacion
+para crear un certificado: sujeto, fecha de inicio, fecha de 
+fin.
+POST: Devuelve un certificado (Certificado) con cargado
+con la informacion del archivo.
+Levanta OSError en caso de error.
+*/
+Certificado Cliente::cargar_info(const char *nombreInfoCertif){
+    Certificado certif;
+    ArchivoCertif archCertif(nombreInfoCertif);
+    archCertif.cargar_info(certif);
+    archCertif.cerrar();
+    return std::move(certif);        
+}
+
+/*
+PRE: Recibe el nombre (const char *) de un archivo, 
+y un archivable (Archivable &).
+POST: Carga el archivable.
+Levanta OSError en caso de error.
+*/
+void Cliente::cargar_archivable(const char* nombre, Archivable &archivable){
+    Archivo arch(nombre, 'r');
+    arch >> archivable;
+    arch.cerrar();
+}
+
+/*
+PRE: Recibe el nombre (const char *) de un archivo 
+que contenga un certificado.
+POST: Devuelve un certificado (Certificado)
+*/
+Certificado Cliente::cargar_certif(const char* nombreArchCertif){ //habra que hacer std::move tambien al recibir
+    Certificado certif;
+    this->cargar_archivable(nombreArchCertif, certif);
+    return std::move(certif);
+}
+/*
+PRE: Recibe el nombre (const char *) de un archivo que 
+contiene un clave publica o completa (publica y privada).
+POST: Devuelve una clave (ClaveRSA) cargado con la 
+informacion del archivo.
+Levanta OSError en caso de error.
+*/
+ClaveRSA Cliente::cargar_claves(const char* nombreClaves){
+    ClaveRSA clave;
+    this->cargar_archivable(nombreClaves, clave);
+    return std::move(clave);
+}
+
+/*
+PRE: Recibe un certificado (Certificado &).
+POST: Guardar el contenido del certificado en un
+archivo de nombre: "<sujeto del certificado>.cert"
+Levanta OSError en caso de error.
+*/
+void Cliente::guardar_certif(Certificado &certif){
+    std::string nombreArchCertif = certif.getSujeto() + ".cert";
+    Archivo arch(nombreArchCertif.data(),'w');
+    arch << certif;
+    arch.cerrar();
+}
+
+/*
+PRE: Recibe un certificado (Certificado &).
+POST: devuelve (uint32_t) e imprime el hash 
+del certicado, de la forma:
+"Hash calculado: <hash calculado>\n"
+*/
+uint32_t Cliente::calcular_imprimir_hash(Certificado &certif){
+    uint32_t hashCalc = certif.hashear();
+    std::cout << "Hash calculado: "; 
+    std::cout << std::to_string(hashCalc) << "\n";
+    return hashCalc;
+}
+
+/*
+PRE: Recibe un huella del servidor (uint32_t), las claves
+(ClaveRSA) del cliente y la publica del servidor.
+POST: Desencripta la huella recibida e imprime en el proceso:
+"Huella del servidor: <huella del servidor>"
+"Hash del servidor: <huella desencriptada>"
+Devuelve la huella desencritada.
+*/
+uint32_t Cliente::desencrip_imprimir_huella_svr(uint32_t huellaSvr,
+ClaveRSA &clvClnt, ClaveRSA clvSvr){
+    std::cout << "Huella del servidor: ";
+    std::cout << std::to_string(huellaSvr) << "\n";
+    uint32_t hashSvr = clvClnt.encriptar_privado(huellaSvr);
+    hashSvr = clvSvr.encriptar_publico(hashSvr);
+    std::cout << "Hash del servidor: "; 
+    std::cout << std::to_string(hashSvr) << "\n";
+    return hashSvr;
+}
+
+/*
+PRE: Recibe un hash del cliente (uint32_t), las claves
+(ClaveRSA) del cliente y la publica del servidor.
+POST: Encripta el hash recibido y lo imprime en el proceso:
+"Hash encriptado con la clave privada: <hash encriptado con clave...>"
+"Huella enviada : <hash completamente encriptado>"
+*/
+uint32_t Cliente::encrip_imprimir_hash_clnt(uint32_t hashClnt,
+ClaveRSA &clvClnt, ClaveRSA &clvSvr){
+    uint32_t huellaCliente = clvClnt.encriptar_privado(hashClnt);
+    std::cout << "Hash encriptado con la clave privada: ";
+    std::cout << std::to_string(huellaCliente) << "\n";
+    huellaCliente = clvSvr.encriptar_publico(huellaCliente);
+    std::cout << "Huella enviada: ";
+    std::cout << std::to_string(huellaCliente) << "\n";
+    return huellaCliente;
+}
+
+/*
 PRE: Recibe el nombre (const char *) del archivo donde esta 
 la informacion con la cual solicitar la creacion de un 
 certificado, del archivo con las claves del cliente, y el
@@ -30,26 +145,14 @@ Levanta OSError en caso de error.
 void Cliente::crear_certif(const char *nombreInfoCertif, 
 const char *nombreClavesClnt, const char *nombreClavesSvr){
     Certificado certif;
-    
-    std::ifstream archInfo;
-    archInfo.open(nombreInfoCertif);
-    certif.cargar_info(archInfo);
-    archInfo.close();
-
     ClaveRSA clavesClnt;
-    std::ifstream archClavesCliente;
-    archClavesCliente.open(nombreClavesClnt);
-    archClavesCliente >> clavesClnt;
-    archClavesCliente.close();
-
-    certif.setClave(clavesClnt);
-
     ClaveRSA clavesSvr;
-    std::ifstream archClavesServidor;
-    archClavesServidor.open(nombreClavesSvr);
-    archClavesServidor >> clavesSvr;
-    archClavesServidor.close();
     try {
+        //habra que hacer std::move tambien al recibir ?
+        Certificado certif = this->cargar_info(nombreInfoCertif);
+        ClaveRSA clavesClnt = this->cargar_claves(nombreClavesClnt);
+        certif.setClave(clavesClnt);
+        ClaveRSA clavesSvr = this->cargar_claves(nombreClavesSvr);
         Protocolo proto(this->skt);
         proto.enviar_bytes(0,1);
         certif.enviar_parametros(proto);
@@ -60,32 +163,23 @@ const char *nombreClavesClnt, const char *nombreClavesSvr){
             return;
         }   
         certif.recibir(proto);
-        uint32_t huellaServidor;
-        proto.recibir_cuatro_bytes(huellaServidor);
-        std::cout << "Huella del servidor: ";
-        std::cout << std::to_string(huellaServidor) << "\n";
-        uint32_t hashSvr = clavesClnt.encriptar_privado(huellaServidor);
-        hashSvr = clavesSvr.encriptar_publico(hashSvr);
-        std::cout << "Hash del servidor: "; 
-        std::cout << std::to_string(hashSvr) << "\n";
-        uint32_t hashCalculado = certif.hashear();
-        std::cout << "Hash calculado: "; 
-        std::cout << std::to_string(hashCalculado) << "\n";
+        uint32_t huellaSvr;
+        proto.recibir_cuatro_bytes(huellaSvr);
+        uint32_t hashSvr;
+        hashSvr = this->desencrip_imprimir_huella_svr(huellaSvr, 
+            clavesClnt, clavesSvr);
+        uint32_t hashCalculado = this->calcular_imprimir_hash(certif);
         if (hashSvr != hashCalculado){
             proto.enviar_bytes(1,1);
             std::cout << "Error: los hashes no coinciden.\n";
             return;
         }
         proto.enviar_bytes(0,1);
+        this->guardar_certif(certif);
     } catch (OSError &e){
         std::string err = "Error al crear certificado.";
         throw OSError(err.data());
     }
-    std::ofstream archCertif;
-    std::string nombreArchCertif = certif.getSujeto() + ".cert";
-    archCertif.open(nombreArchCertif);
-    archCertif << certif;
-    archCertif.close();
 }
 
 /*
@@ -98,39 +192,48 @@ Levanta OSError en caso de error.
 */
 void Cliente::revocar_certif(const char *nombreCertif, 
 const char *nombreClavesClnt, const char *nombreClavesSvr){
-    Certificado certif;
-    
-    std::ifstream archCertif;
-    archCertif.open(nombreCertif);
-    archCertif >> certif;
-    archCertif.close();
-
-    ClaveRSA clavesClnt;
-
-    std::ifstream archClavesClnt;
-    archClavesClnt.open(nombreClavesClnt);
-    archClavesClnt >> clavesClnt;
-    archClavesClnt.close();
-
-    ClaveRSA clavesSvr;
-
-    std::ifstream archClavesSvr;
-    archClavesSvr.open(nombreClavesSvr);
-    archClavesSvr >> clavesSvr;
-    archClavesSvr.close();
     try {   
+        Certificado certif = this->cargar_certif(nombreCertif);
+        /*
+        std::ifstream archCertif;
+        archCertif.open(nombreCertif);
+        archCertif >> certif;
+        archCertif.close();
+        */
+        ClaveRSA clavesClnt = this->cargar_claves(nombreClavesClnt);
+        /*
+        std::ifstream archClavesClnt;
+        archClavesClnt.open(nombreClavesClnt);
+        archClavesClnt >> clavesClnt;
+        archClavesClnt.close();
+        */
+        ClaveRSA clavesSvr = this->cargar_claves(nombreClavesSvr);
+        /*
+        std::ifstream archClavesSvr;
+        archClavesSvr.open(nombreClavesSvr);
+        archClavesSvr >> clavesSvr;
+        archClavesSvr.close();
+        */
         Protocolo proto(this->skt);
         proto.enviar_bytes(1,1);
         certif.enviar(proto);
+        /*
         uint32_t huellaCliente = certif.hashear();
         std::cout << "Hash calculado: ";
         std::cout << std::to_string(huellaCliente) << "\n";
+        */
+        uint32_t hashClnt = this->calcular_imprimir_hash(certif);
+        /*
         huellaCliente = clavesClnt.encriptar_privado(huellaCliente);
         std::cout << "Hash encriptado con la clave privada: ";
         std::cout << std::to_string(huellaCliente) << "\n";
         huellaCliente = clavesSvr.encriptar_publico(huellaCliente);
         std::cout << "Huella enviada: ";
         std::cout << std::to_string(huellaCliente) << "\n";
+        */
+        uint32_t huellaCliente;
+        huellaCliente = this->encrip_imprimir_hash_clnt(hashClnt, 
+            clavesClnt, clavesSvr);
         proto.enviar_bytes(huellaCliente, 4);
         uint8_t respuesta;
         proto.recibir_un_byte(respuesta);

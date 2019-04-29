@@ -165,6 +165,16 @@ void ClaveRSA::cargar(std::istream &in){
 }
 
 /*
+PRE: Recibe un flujo de salida (std::ostream &).
+POST: Escribe la representacion completa de la clave
+en el flujo:
+<exponente publico> <exponente privado> <modulo>
+*/
+void ClaveRSA::guardar(std::ostream &out) const {
+    out << this->a_string();
+}
+
+/*
 Devuelve el exponente publico (uint8_t) de 
 la clave
 */
@@ -181,4 +191,10 @@ uint16_t ClaveRSA::getModulo(){
 std::istream& operator>>(std::istream &in, ClaveRSA &clave){
     clave.cargar(in);
     return in;
+}
+
+/*Sobrecarga del operador << para ClaveRSA*/
+std::ostream& operator<<(std::ostream &out, ClaveRSA &clave){
+    clave.guardar(out);
+    return out;
 }
