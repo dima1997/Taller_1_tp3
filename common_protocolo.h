@@ -10,25 +10,21 @@ class Protocolo {
 
     /*
     PRE: Recibe un buffer con el mensaje (const char *) a enviar, 
-    el largo (uint32_t) del mensaje a enviar, y una pequeña 
-    descripcion (const char *) de lo que se quiera mostrar en caso
-    de error
+    el largo (uint32_t) del mensaje a enviar.
     POST: Envia todo el mensaje recibido.
     Levanta OSError en caso de error, si no se logro enviar todo 
     el mensaje.
     */
-    void _enviar(const char* buffer, uint32_t largo, const char* err);
+    void _enviar(const char* buffer, uint32_t largo);
 
     /*
     PRE: Recibe un buffer donde se guardara el mensaje (char *) a 
-    recibir, el largo (uint32_t) del mensaje a recibir, y una pequeña 
-    descripcion (const char *) de lo que se quiera mostrar en caso
-    de error.
-    POST: Recibe y guardar en el mensaje recibido en el buffer recibido.
+    recibir, el largo (uint32_t) del mensaje a recibir.
+    POST: Recibe y guardar el mensaje recibido en el buffer recibido.
     Levanta OSError en caso de error, en caso de que no se haya recibido
     el largo esperado.
     */
-    void _recibir(char *buffer, uint32_t largo, const char* err);
+    void _recibir(char *buffer, uint32_t largo);
 
     public:
     /*
@@ -61,36 +57,27 @@ class Protocolo {
     void enviar_bytes(uint32_t valor, size_t bytes);
 
     /*
-    PRE: Recibe una referencia a una string (std::string &).
-    POST: Devuelve el largo del mensaje recibido, si logro
-    correctamente recibir y guardar el mensaje recibido en
-    la referencia recibida.
+    Devuelve un mensaje recibido (std::string).
     Levanta OSError en caso de error. 
     */
-    uint32_t recibir_mensaje(std::string &mensaje);
+    std::string recibir_mensaje();
 
     /*
-    PRE: Recibe una referencia a un entero sin signo de 1 bytes
-    (uint8_t &).
-    POST: Recibe 1 byte y lo guarda en la referencia recibida.
+    Recibe 1 byte y lo devuelve (uint8_t).
     Levante OSError en caso de error.
     */
-    void recibir_un_byte(uint8_t &valor);
+    uint8_t recibir_un_byte();
 
     /*
-    PRE: Recibe una referencia a un entero sin signo de 2 bytes
-    (uint16_t &).
-    POST: Recibe 2 bytes y lo guarda en la referencia recibida.
+    Recibe 2 bytes y los devuelve (uint16_t).
     Levante OSError en caso de error.
     */
-    void recibir_dos_bytes(uint16_t &valor);
+    uint16_t recibir_dos_bytes();
 
     /*
-    PRE: Recibe una referencia a un entero sin signo de 4 bytes
-    (uint32_t &).
-    POST: Recibe 4 bytes y lo guarda en la referencia recibida.
+    Recibe 4 bytes y los devuelve (uint32_t).
     Levante OSError en caso de error.
     */
-    void recibir_cuatro_bytes(uint32_t &valor);
+    uint32_t recibir_cuatro_bytes();
 };
 #endif //PROTOCOLO_H

@@ -13,43 +13,33 @@ Protocolo::~Protocolo(){}
 
 /*
 PRE: Recibe un buffer con el mensaje (const char *) a enviar, 
-el largo (uint32_t) del mensaje a enviar, y una pequeña 
-descripcion (const char *) de lo que se quiera mostrar en caso
-de error
+el largo (uint32_t) del mensaje a enviar.
 POST: Envia todo el mensaje recibido.
 Levanta OSError en caso de error, si no se logro enviar todo 
 el mensaje.
 */
-void Protocolo::_enviar(const char* buffer, uint32_t largo, const char* err){
+void Protocolo::_enviar(const char* buffer, uint32_t largo){
     int bytesEnviados = 0;
-    try {
-        bytesEnviados = this->skt.enviar_todo(buffer, largo);
-    } catch (OSError &e){
-        throw OSError(err);
-    }
+    bytesEnviados = this->skt.enviar_todo(buffer, largo);
     if (bytesEnviados != (int)largo){
-        throw OSError(err);
+        std::string err = "Error: No se enviaron todos los bytes.";
+        throw OSError(__FILE__,__LINE__,err.data());
     }
 }
 
 /*
 PRE: Recibe un buffer donde se guardara el mensaje (char *) a 
-recibir, el largo (uint32_t) del mensaje a recibir, y una pequeña 
-descripcion (const char *) de lo que se quiera mostrar en caso
-de error.
-POST: Recibe y guardar en el mensaje recibido en el buffer recibido.
+recibir, el largo (uint32_t) del mensaje a recibir.
+POST: Recibe y guardar el mensaje recibido en el buffer recibido.
 Levanta OSError en caso de error, en caso de que no se haya recibido
 el largo esperado.
 */
-void Protocolo::_recibir(char *buffer, uint32_t largo, const char* err){
+void Protocolo::_recibir(char *buffer, uint32_t largo){
     int bytesRecibidos = 0;
-    try {
-        bytesRecibidos = this->skt.recibir_algo(buffer, largo);
-    } catch (OSError &e){
-        throw OSError(err);
-    }
+    bytesRecibidos = this->skt.recibir_algo(buffer, largo);
     if (bytesRecibidos !=  (int)largo){
-        throw OSError(err);
+        std::string err = "Error: No se recibieron todos los bytes.";
+        throw OSError(__FILE__,__LINE__,err.data());
     }
 }
 
@@ -64,8 +54,8 @@ void Protocolo::enviar_mensaje(std::string &mensaje){
     uint32_t largo = mensaje.size(); 
     uint32_t largoBE = htobe32(largo);
     char *buffer = (char*) &largoBE;
-    this->_enviar(buffer, bytesLargo, "largo del mensaje");
-    this->_enviar(mensaje.data(), largo, "mensaje");
+    this->_enviar(buffer, bytesLargo);
+    this->_enviar(mensaje.data(), largo);
 }
 
 /*
@@ -79,88 +69,74 @@ recibido.
 Si bytes es 2 o 4, se envia en formato big endian.
 */
 void Protocolo::enviar_bytes(uint32_t valor, size_t bytes){
-    std::string err = "Error al enviar ";
-    if (bytes == 1){
+    size_t unByte = 1;
+    size_t dosBytes = 2;
+    size_t cuatroBytes = 4;
+    if (bytes == unByte){
         uint8_t valorEnviar = (valor & 0x000000FF);
         const char *buffer = (char *) &valorEnviar;
-        err += "un byte";
-        this->_enviar(buffer, 1, err.data());
+        this->_enviar(buffer, unByte);
     }
-    if (bytes == 2){
+    if (bytes == dosBytes){
         uint16_t valorEnviar = (valor & 0x0000FFFF);
         uint16_t valorEnviarBE = htobe16(valorEnviar);
         const char *buffer = (char*) &valorEnviarBE;
-        err += "dos bytes";
-        this->_enviar(buffer, 2, err.data()); 
+        this->_enviar(buffer, dosBytes); 
     }
-    if (bytes == 4){
+    if (bytes == cuatroBytes){
         uint32_t valorEnviar = valor;
         uint32_t valorEnviarBE = htobe32(valorEnviar);
         const char *buffer = (char *) &valorEnviarBE;
-        err += "cuatro bytes"; 
-        this->_enviar(buffer, 4, err.data()); 
+        this->_enviar(buffer, cuatroBytes); 
     }
 }
 
 /*
-PRE: Recibe una referencia a una string (std::string &).
-POST: Devuelve el largo del mensaje recibido, si logro
-correctamente recibir y guardar el mensaje recibido en
-la referencia recibida.
+Devuelve un mensaje recibido (std::string).
 Levanta OSError en caso de error. 
 */
-uint32_t Protocolo::recibir_mensaje(std::string &mensaje){
-    std::string err = "Error al recibir mensaje";
-    uint32_t largoMensaje = 0;
-    this->recibir_cuatro_bytes(largoMensaje);
+std::string Protocolo::recibir_mensaje(){
+    std::string mensaje;
+    uint32_t largoMensaje = this->recibir_cuatro_bytes();
     char *buffer = new char[largoMensaje+1]; // +\0
     try {
-        this->_recibir(buffer, largoMensaje, err.data());
-    } catch (OSError &e){
+        this->_recibir(buffer, largoMensaje);
+    } catch (OSError &error){
         delete [] buffer;
-        throw e;
+        throw error;
     }
     buffer[largoMensaje] = 0;
     mensaje = buffer;
     delete [] buffer;
-    return largoMensaje;
+    return std::move(mensaje);
 }
 
 /*
-PRE: Recibe una referencia a un entero sin signo de 1 bytes
-(uint8_t &).
-POST: Recibe 1 byte y lo guarda en la referencia recibida.
+Recibe 1 byte y lo devuelve (uint8_t).
 Levante OSError en caso de error.
 */
-void Protocolo::recibir_un_byte(uint8_t &valor){
-    std::string err = "Error al recibir un byte";
+uint8_t Protocolo::recibir_un_byte(){
     uint8_t valorRecibido = 0;
-    this->_recibir((char*)&valorRecibido, 1, err.data());
-    valor = valorRecibido;
+    this->_recibir((char*)&valorRecibido, 1);
+    return valorRecibido;
 }
 
 /*
-PRE: Recibe una referencia a un entero sin signo de 2 bytes
-(uint16_t &).
-POST: Recibe 2 bytes y lo guarda en la referencia recibida.
+Recibe 2 bytes y los devuelve (uint16_t).
 Levante OSError en caso de error.
 */
-void Protocolo::recibir_dos_bytes(uint16_t &valor){
-    std::string err = "Error al recibir dos bytes";
+uint16_t Protocolo::recibir_dos_bytes(){
     uint16_t valorBE = 0;
-    this->_recibir((char*)&valorBE, 2, err.data());
-    valor = be16toh(valorBE);
+    this->_recibir((char*)&valorBE, 2);
+    return be16toh(valorBE);
 }
 
 /*
-PRE: Recibe una referencia a un entero sin signo de 4 bytes
-(uint32_t &).
-POST: Recibe 4 bytes y lo guarda en la referencia recibida.
+Recibe 4 bytes y los devuelve (uint32_t).
 Levante OSError en caso de error.
 */
-void Protocolo::recibir_cuatro_bytes(uint32_t &valor){
-    std::string err = "Error al recibir cuatro bytes";
+uint32_t Protocolo::recibir_cuatro_bytes(){
     uint32_t valorBE = 0;
-    this->_recibir((char*)&valorBE, 4, err.data());
-    valor = be32toh(valorBE);
+    this->_recibir((char*)&valorBE, 4);
+    return be32toh(valorBE);
 }

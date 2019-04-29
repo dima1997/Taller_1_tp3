@@ -6,6 +6,7 @@
 #include "common_hash.h"
 #include "common_tiempo.h"
 #include "common_certificado.h"
+#define VIGENCIA_CERTIFICADO 30
 
 /*
 PRE: Recibe un entero sin signo de 4 bytes.
@@ -181,16 +182,16 @@ Levanta OSError en caso de error.
 */
 void Certificado::recibir(Protocolo &proto){
     try {
-        proto.recibir_cuatro_bytes(this->numeroSerie);
-        proto.recibir_mensaje(this->asunto);
-        proto.recibir_mensaje(this->sujeto);
-        proto.recibir_mensaje(this->inicio);
-        proto.recibir_mensaje(this->fin);
-        proto.recibir_dos_bytes(this->mod);
-        proto.recibir_un_byte(this->exp);
-    } catch (OSError &e){
+        this->numeroSerie = proto.recibir_cuatro_bytes();
+        this->asunto = proto.recibir_mensaje();
+        this->sujeto = proto.recibir_mensaje();
+        this->inicio = proto.recibir_mensaje();
+        this->fin = proto.recibir_mensaje();
+        this->mod = proto.recibir_dos_bytes();
+        this->exp = proto.recibir_un_byte();
+    } catch (OSError &error){
         std::string err = "Error al recibir certificado.";
-        throw OSError(err.data());
+        throw OSError(__FILE__,__LINE__,err.data());
     }
 }
 
@@ -210,9 +211,9 @@ void Certificado::enviar(Protocolo &proto){
         proto.enviar_mensaje(this->fin);
         proto.enviar_bytes(this->mod, 2);
         proto.enviar_bytes(this->exp, 1);
-    } catch (OSError &e){
-        std::string err = "Error al enviar certificado";
-        throw OSError(err.data());
+    } catch (OSError &error){
+        std::string err = "Error al enviar certificado.";
+        throw OSError(__FILE__,__LINE__,err.data());
     }
 }
 
@@ -226,14 +227,14 @@ Levanta OSError en caso de error.
 */
 void Certificado::recibir_parametros(Protocolo &proto){
     try {
-        proto.recibir_mensaje(this->sujeto);
-        proto.recibir_dos_bytes(this->mod);
-        proto.recibir_un_byte(this->exp);
-        proto.recibir_mensaje(this->inicio);
-        proto.recibir_mensaje(this->fin);
-    } catch (OSError &e){
-        std::string err = "Error al recibir parametros de creacion";
-        throw OSError(err.data());
+        this->sujeto = proto.recibir_mensaje();
+        this->mod = proto.recibir_dos_bytes();
+        this->exp = proto.recibir_un_byte();
+        this->inicio = proto.recibir_mensaje();
+        this->fin = proto.recibir_mensaje();
+    } catch (OSError &error){
+        std::string err = "Error al recibir parametros de creacion.";
+        throw OSError(__FILE__,__LINE__,err.data());
     }
 }
 
@@ -272,7 +273,7 @@ void Certificado::cargar_info(std::istream &in){
         //No hay fecha de inicio, ni final
         Tiempo tiempo;
         this->inicio = tiempo.representar();
-        tiempo.sumar_dias(30);
+        tiempo.sumar_dias(VIGENCIA_CERTIFICADO);
         this->fin = tiempo.representar();
         return;
     }

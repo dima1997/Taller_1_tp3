@@ -24,9 +24,7 @@ HCertfcdor::~HCertfcdor(){}
 /*Ejecuta el hilo certificador*/
 void HCertfcdor::run(){
     Protocolo proto(this->skt);
-    //Recibo comando
-    uint8_t comando = 3; //Comando invalido
-    proto.recibir_un_byte(comando);
+    uint8_t comando = proto.recibir_un_byte(); 
     if (comando == 0){
         this->crear(proto);
     } 
@@ -64,15 +62,14 @@ void HCertfcdor::crear(Protocolo &proto){
         huellaCertif = this->claveServidor.encriptar_privado(hashCertif);
         huellaCertif = claveCliente.encriptar_publico(huellaCertif);
         proto.enviar_bytes(huellaCertif,4);
-        uint8_t seRecibioCorrectamente;
-        proto.recibir_un_byte(seRecibioCorrectamente);
+        uint8_t seRecibioCorrectamente = proto.recibir_un_byte();
         if (seRecibioCorrectamente == 1){
             //El cliente no recibio la huella correcta
             this->sujetosClaves.borrar(sujeto);
         }
-    } catch (OSError &e){
-        std::string err = "Error al crear certificado";
-        throw OSError(err.data());
+    } catch (OSError &error){
+        std::string err = "Error al crear certificado.";
+        throw OSError(__FILE__,__LINE__,err.data());
     }
     //Si recibo 0, no hago nada
     //Supongo que no voy a recibir ningun otro valor
@@ -89,8 +86,7 @@ void HCertfcdor::revocar(Protocolo &proto){
     Certificado certif;
     try {
         certif.recibir(proto);
-        uint32_t huellaCliente;
-        proto.recibir_cuatro_bytes(huellaCliente);
+        uint32_t huellaCliente = proto.recibir_cuatro_bytes();
         std::string sujeto = certif.getSujeto();
         ClaveRSA claveCliente;
         if (! this->sujetosClaves.obtenerSiEsta(sujeto, claveCliente)){
@@ -109,9 +105,9 @@ void HCertfcdor::revocar(Protocolo &proto){
         }
         this->sujetosClaves.borrar(sujeto);
         proto.enviar_bytes(0,1);
-    } catch (OSError &e){
-        std::string err = "Error al revocar certificado";
-        throw OSError(err.data());
+    } catch (OSError &error){
+        std::string err = "Error al revocar certificado.";
+        throw OSError(__FILE__,__LINE__,err.data());
     }
     return;
 }
