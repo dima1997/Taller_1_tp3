@@ -104,14 +104,14 @@ std::string Certificado::a_string() const{
     certificado += " (" + a_hexa32_string(this->numeroSerie) + ")" + "\n"; 
     certificado += "\tsubject: " + this->sujeto + "\n";
     certificado += "\tissuer: " + this->asunto + "\n";
-    certificado += "\t​validity:​\n";
+    certificado += "\tvalidity:\n";
     certificado += "\t\tnot before: " + this->inicio + "\n";
     certificado += "\t\tnot after: " + this->fin + "\n";
     certificado += "\tsubject public key info:\n";
     certificado += "\t\tmodulus: " + std::to_string(this->mod);
     certificado += " (" + a_hexa16_string(this->mod) + ")" + "\n"; 
     certificado += "\t\texponent: " + std::to_string(this->exp); 
-    certificado += " (" + a_hexa8_string(this->exp) + ")" + "\n"; 
+    certificado += " (" + a_hexa8_string(this->exp) + ")"; 
     return std::move(certificado);
 }
 
