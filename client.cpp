@@ -33,7 +33,7 @@ const char *nombreClavesClnt, const char *nombreClavesSvr){
     
     std::ifstream archInfo;
     archInfo.open(nombreInfoCertif);
-    certif.cargar(archInfo);
+    certif.cargar_info(archInfo);
     archInfo.close();
 
     ClaveRSA clavesClnt;

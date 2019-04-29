@@ -203,8 +203,8 @@ void prueba_mapa_cargar(){
 
 // tda ContadorBloq
 
-/*Crea un contador bloqueanteinicializado en cero.*/
-ContadorBloq::ContadorBloq() : cuenta(0){}
+/*Crea un contador bloqueanteinicializado en uno.*/
+ContadorBloq::ContadorBloq() : cuenta(1){}
 
 /*Destruye un contador bloqueante.*/
 ContadorBloq::~ContadorBloq(){}

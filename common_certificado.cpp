@@ -135,7 +135,7 @@ void Certificado::recibir(Protocolo &proto){
         proto.recibir_mensaje(this->asunto);
         proto.recibir_mensaje(this->sujeto);
         proto.recibir_mensaje(this->inicio);
-        proto.recibir_mensaje(this->inicio);
+        proto.recibir_mensaje(this->fin);
         proto.recibir_dos_bytes(this->mod);
         proto.recibir_un_byte(this->exp);
     } catch (OSError &e){
@@ -209,6 +209,31 @@ void Certificado::enviar_parametros(Protocolo &proto){
 }
 
 /*
+PRE: Recibe un flujo de entrada que contenga informacion del 
+certificado a crear : subject, fecha de inicio, fecha de finalizacion.
+POST: Carga en el certificado actual los datos anteriores.
+*/
+void Certificado::cargar_info(std::istream &in){
+    std::string linea;
+    std::getline(in, linea);
+    this->sujeto = std::move(linea);
+    std::getline(in, linea);
+    if (! in.good()){
+        //No hay fecha de inicio, ni final
+        Tiempo tiempo;
+        this->inicio = tiempo.representar();
+        tiempo.sumar_dias(30);
+        this->fin = tiempo.representar();
+        return;
+    }
+    //Suponemos que abra tanto inicio como final
+    this->inicio = std::move(linea);
+    std::getline(in, linea);
+    this->fin = std::move(linea);
+    return;
+}
+
+/*
 PRE: Recibe una referencia a una linea (std::string &)
 de un archivo que contiene un certificado.
 POST: Procesa la linea guardando informacion de ella
@@ -268,31 +293,6 @@ void Certificado::_procesar_linea(std::string &linea){
     //Suponemos que el certificado no va a tener errores.
     return;
 } 
-
-/*
-PRE: Recibe un flujo de entrada que contenga informacion del 
-certificado a crear : subject, fecha de inicio, fecha de finalizacion.
-POST: Carga en el certificado actual los datos anteriores.
-*/
-void Certificado::cargar_info(std::istream &in){
-    std::string linea;
-    std::getline(in, linea);
-    this->sujeto = std::move(linea);
-    std::getline(in, linea);
-    if (! in.good()){
-        //No hay fecha de inicio, ni final
-        Tiempo tiempo;
-        this->inicio = tiempo.representar();
-        tiempo.sumar_dias(30);
-        this->fin = tiempo.representar();
-        return;
-    }
-    //Suponemos que abra tanto inicio como final
-    this->inicio = std::move(linea);
-    std::getline(in, linea);
-    this->fin = std::move(linea);
-    return;
-}
 
 /*
 PRE: Recibe un flujo de entrada (istream &) que contenga

@@ -113,15 +113,16 @@ uint32_t Protocolo::recibir_mensaje(std::string &mensaje){
     std::string err = "Error al recibir mensaje";
     uint32_t largoMensaje = 0;
     this->recibir_cuatro_bytes(largoMensaje);
-    char *buffer = new char[largoMensaje];
+    char *buffer = new char[largoMensaje+1]; // +\0
     try {
         this->_recibir(buffer, largoMensaje, err.data());
     } catch (OSError &e){
-        delete buffer;
+        delete [] buffer;
         throw e;
     }
+    buffer[largoMensaje] = 0;
     mensaje = buffer;
-    delete buffer;
+    delete [] buffer;
     return largoMensaje;
 }
 

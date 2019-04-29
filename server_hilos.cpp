@@ -160,7 +160,8 @@ void HAceptador::run(){
         MapaBloq &mapa = this->sujetosClaves; 
         ClaveRSA &claveSvr = this->claveSvr;
         hiloCertfcdor = new HCertfcdor(sktActivo, contador, mapa, claveSvr);
-        hiloCertfcdor->run();
+        //hiloCertfcdor->run();
+        hiloCertfcdor->start();
         hilos.push_back(hiloCertfcdor);
         std::vector<Thread*> temp; //copia para iterar
         for (size_t i = 0; i < hilos.size(); ++i){
