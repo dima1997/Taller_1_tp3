@@ -7,8 +7,6 @@
 #include "common_tiempo.h"
 #include "common_certificado.h"
 
-//#include <iostream> // solo para pruebas
-
 /*
 PRE: Recibe un entero sin signo de 4 bytes.
 POST: Devuelve una representacion (std::string) 
@@ -302,10 +300,9 @@ flujo.
 */
 void Certificado::cargar(std::istream &in){
     std::string linea;
-    std::getline(in, linea);
     while (in.good()){
-        this->_procesar_linea(linea);
         std::getline(in, linea);
+        this->_procesar_linea(linea);
     }
 }
 
@@ -330,38 +327,3 @@ std::ostream& operator<<(std::ostream &out, const Certificado &certif){
     return out;
 }
 
-
-/*
-void prueba_certificado_guardar(){
-    std::ofstream archCertificado;
-    archCertificado.open("arch.cert");
-    ClaveRSA clave(19,0,253);
-    std::vector<std::string> info;
-    info.push_back(std::string("A Sujeto"));
-    info.push_back(std::string("Abr 27 19:11:00 2019"));
-    info.push_back(std::string("May 30 07:00:00 2019"));
-    Certificado certif(clave, info);
-    certif.setNumeroSerie(1);
-    std::string asunto = "Taller de programacion 1";
-    certif.setAsunto(asunto);
-    archCertificado << certif;
-    archCertificado.close();
-}
-*/
-/*
-void prueba_certificado_cargar(){
-    std::ifstream archCertificado;
-    archCertificado.open("arch.cert");
-    Certificado certif;
-    archCertificado >> certif;
-    std::cout << certif;
-    std::cout << "Sujeto es: " << certif.getSujeto() << "\n";
-}
-*/
-/*
-int main(){
-    //prueba_certificado_guardar();
-    prueba_certificado_cargar();
-    return 0;
-}
-*/

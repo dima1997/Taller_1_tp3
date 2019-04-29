@@ -20,7 +20,7 @@ de 2 bytes.
 uint16_t Hash::hashear(std::string &cadena, size_t largo){
     uint16_t resultado = 0;
     for (size_t i = 0; i < largo; ++i) {
-        resultado += (uint8_t)cadena[i]; //entero sin signo de un byte
+        resultado += (uint8_t)cadena[i];
     }
     return resultado;
 }
@@ -55,7 +55,7 @@ uint32_t Encriptador::encriptar(uint32_t huella, uint8_t exp, uint16_t mod){
         //Elevo el valor de la base (el valor del byte) 
         //al exponente público de la clave.
         uint32_t base = resultado;
-        for (int j = 1; j < exp; ++j) { //+1
+        for (int j = 1; j < exp; ++j) {
             resultado = (resultado * base) % mod;
         }
         retorno = retorno + (resultado << (i * 8));

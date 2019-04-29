@@ -245,15 +245,14 @@ int Socket::recibir_algo(char *buffer, size_t largo){
     while (largoBuff > bytesRecibidos && seguirRecibiendo) { 
         size_t i = bytesRecibidos;
         size_t largoMaximo = largoBuff - bytesRecibidos; 
-        estado = recv(this->skt, &buffer[i], largoMaximo, MSG_NOSIGNAL); //-1
+        estado = recv(this->skt, &buffer[i], largoMaximo, MSG_NOSIGNAL);
         if (estado < 0) {
             throw OSError(__FILE__,__LINE__,"Error al enviar mensaje.");
         } else if (estado == 0) {
             //Dejamos que esto se maneje desde afuera.
             seguirRecibiendo = false;
         } else {
-            bytesRecibidos += estado; 
-            //buffer[bytesRecibidos] = 0; //Hacer desde afuera
+            bytesRecibidos += estado;
         }
     }
     return bytesRecibidos;

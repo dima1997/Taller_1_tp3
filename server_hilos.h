@@ -133,7 +133,7 @@ class HAceptador : public Thread {
     virtual bool is_dead() override;
 
     /*Le indica al hilo aceptardor que debe dejar ejecutarse*/
-    void finalizar();
+    void stop();
 };
 
 #endif //HILO_CERTIFICADOR_H

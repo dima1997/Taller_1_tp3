@@ -25,7 +25,7 @@ HCertfcdor::~HCertfcdor(){}
 void HCertfcdor::run(){
     Protocolo proto(this->skt);
     //Recibo comando
-    uint8_t comando = 2; //Comando invalido
+    uint8_t comando = 3; //Comando invalido
     proto.recibir_un_byte(comando);
     if (comando == 0){
         this->crear(proto);
@@ -160,10 +160,9 @@ void HAceptador::run(){
         MapaBloq &mapa = this->sujetosClaves; 
         ClaveRSA &claveSvr = this->claveSvr;
         hiloCertfcdor = new HCertfcdor(sktActivo, contador, mapa, claveSvr);
-        //hiloCertfcdor->run();
         hiloCertfcdor->start();
         hilos.push_back(hiloCertfcdor);
-        std::vector<Thread*> temp; //copia para iterar
+        std::vector<Thread*> temp; //aux para iterar
         for (size_t i = 0; i < hilos.size(); ++i){
             if (hilos[i]->is_dead()){
                 hilos[i]->join();
@@ -192,7 +191,7 @@ bool HAceptador::is_dead(){
 }
 
 /*Le indica al hilo aceptardor que debe dejar ejecutarse*/
-void HAceptador::finalizar(){
+void HAceptador::stop(){
     this->estaMuerto = true;
     this->skt.cerrar_canal(2); //SHUT_RDWR
     this->skt.cerrar();

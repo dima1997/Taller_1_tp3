@@ -6,6 +6,7 @@
 #include "server_hilos.h"
 #include "server_hilos_aux.h"
 #include "server.h"
+#define CANTIDAD_CLIENTES_ESCUCHAR 20
 
 /*Inicializa un servidor*/
 Servidor::Servidor(){}
@@ -24,7 +25,7 @@ POST: Ejecuta un servidor que crea y revoca certificados
 void Servidor::ejecutar(const char* puerto, const char* claves, 
 const char* indice){
     Socket sktPasivo(puerto);
-    sktPasivo.escuchar(20);
+    sktPasivo.escuchar(CANTIDAD_CLIENTES_ESCUCHAR);
     ContadorBloq contador;
     MapaBloq sujetosClaves;
 
@@ -48,7 +49,7 @@ const char* indice){
     while (caracterSalida != 'q'){
         std::cin.get(caracterSalida);
     }
-    hiloAceptador.finalizar();
+    hiloAceptador.stop();
     hiloAceptador.join();
 
     std::ofstream archIndiceSalida;
@@ -60,11 +61,9 @@ const char* indice){
 }
 
 int main(int argc, const char* argv[]) {
-    /*
     if (argc != 4) {
-        return 1; //Aunque no deberia pasar
+        return 1;
     }
-    */
     const char *puerto = argv[1];
     const char *claves = argv[2];
     const char *indice = argv[3];
