@@ -88,7 +88,9 @@ PRE: Recibe una doble referencia a otro certificado
 (Certificado &&).
 POST: Mueve semanticamente todos los atributos del certificado
 recibido al actual.
-El certificado recibido queda en estado nulo. 
+El certificado recibido queda en estado nulo.
+Devuelve una referencia al actual certificado 
+(Certificado &). 
 */
 Certificado& Certificado::operator=(Certificado &&otroCertif){
     if (this== &otroCertif){
@@ -108,6 +110,41 @@ Certificado& Certificado::operator=(Certificado &&otroCertif){
     otroCertif.fin = "";
     otroCertif.exp = 0;
     otroCertif.mod = 0; 
+    return *this;
+}
+
+/*
+PRE: Recibe otro certificado (const Certificado &).
+POST: Crea un nuevo certificado por copia.
+*/
+Certificado::Certificado(const Certificado &otroCertif){
+    this->numeroSerie = otroCertif.numeroSerie;
+    this->asunto = otroCertif.asunto;
+    this->sujeto = otroCertif.sujeto;
+    this->inicio = otroCertif.inicio;
+    this->fin = otroCertif.fin;
+    this->exp = otroCertif.exp;
+    this->mod = otroCertif.mod;
+}
+
+/*
+PRE: Recibe otro certificado (const Certificado &).
+POST: Asigna por copia los atributos del certificado 
+recibido al actual.
+Devuelve una referencia al actual certificado 
+(Certificado &).
+*/
+Certificado& Certificado::operator=(const Certificado &otroCertif){
+    if (this == &otroCertif){
+        return *this;
+    }
+    this->numeroSerie = otroCertif.numeroSerie;
+    this->asunto = otroCertif.asunto;
+    this->sujeto = otroCertif.sujeto;
+    this->inicio = otroCertif.inicio;
+    this->fin = otroCertif.fin;
+    this->exp = otroCertif.exp;
+    this->mod = otroCertif.mod;
     return *this;
 }
 

@@ -53,6 +53,8 @@ class Certificado : public Archivable {
     /*Destruye un certificado*/
     ~Certificado();
 
+    // Move semantics
+
     /*
     PRE: Recibe una doble referencia a otro certificado
     (Certificado &&).
@@ -70,6 +72,23 @@ class Certificado : public Archivable {
     El certificado recibido queda en estado nulo. 
     */
     Certificado& operator=(Certificado &&otroCertif);
+
+    // Copias
+
+    /*
+    PRE: Recibe otro certificado (const Certificado &).
+    POST: Crea un nuevo certificado por copia.
+    */
+    Certificado(const Certificado &otroCertif);
+
+    /*
+    PRE: Recibe otro certificado (const Certificado &).
+    POST: Asigna por copia los atributos del certificado 
+    recibido al actual.
+    Devuelve una referencia al actual certificado 
+    (Certificado &).
+    */
+    Certificado& operator=(const Certificado &otroCertif);
 
     /*
     PRE: Recibe un numero serie (uint32_t).

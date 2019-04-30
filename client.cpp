@@ -145,10 +145,10 @@ Levanta OSError en caso de error.
 void Cliente::crear_certif(const char *nombreInfoCertif, 
 const char *nombreClavesClnt, const char *nombreClavesSvr){
     try {
-        Certificado certif = this->cargar_info(nombreInfoCertif);
-        ClaveRSA clavesClnt = this->cargar_claves(nombreClavesClnt);
+        Certificado certif = std::move(this->cargar_info(nombreInfoCertif));
+        ClaveRSA clavesClnt = std::move(this->cargar_claves(nombreClavesClnt));
         certif.setClave(clavesClnt);
-        ClaveRSA clavesSvr = this->cargar_claves(nombreClavesSvr);
+        ClaveRSA clavesSvr = std::move(this->cargar_claves(nombreClavesSvr));
         Protocolo proto(this->skt);
         proto.enviar_bytes(0,1);
         certif.enviar_parametros(proto);
@@ -187,9 +187,9 @@ Levanta OSError en caso de error.
 void Cliente::revocar_certif(const char *nombreCertif, 
 const char *nombreClavesClnt, const char *nombreClavesSvr){
     try {
-        Certificado certif = this->cargar_certif(nombreCertif);
-        ClaveRSA clavesClnt = this->cargar_claves(nombreClavesClnt);
-        ClaveRSA clavesSvr = this->cargar_claves(nombreClavesSvr);
+        Certificado certif = std::move(this->cargar_certif(nombreCertif));
+        ClaveRSA clavesClnt = std::move(this->cargar_claves(nombreClavesClnt));
+        ClaveRSA clavesSvr = std::move(this->cargar_claves(nombreClavesSvr));
         Protocolo proto(this->skt);
         proto.enviar_bytes(1,1);
         certif.enviar(proto);

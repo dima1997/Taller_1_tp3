@@ -81,7 +81,7 @@ const char* indice){
         ContadorBloq contador;
         MapaBloq sujetosClaves;
         this->cargar_contador_mapa(indice, contador, sujetosClaves);
-        ClaveRSA claveSvr = this->cargar_claves(claves);
+        ClaveRSA claveSvr = std::move(this->cargar_claves(claves));
         HAceptador hiloAceptador(sktPasivo, contador, sujetosClaves, claveSvr);
         hiloAceptador.start();
         char caracterSalida = 0;
