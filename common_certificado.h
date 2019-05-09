@@ -31,12 +31,27 @@ std::string a_hexa8_string(const uint8_t &valor);
 class Certificado : public Archivable {
     public:
     uint32_t numeroSerie;
-    std::string asunto;
     std::string sujeto;
+    std::string asunto;
     std::string inicio;
     std::string fin;
-    uint8_t exp;
-    uint16_t mod;
+    //uint16_t mod;
+    //uint8_t exp;
+    ClaveRSA clavesCliente;
+
+    /*
+    PRE: Recibe :
+    numero de serie (uint32_t)
+    sujeto (std::string &)
+    asunto (std::string &)
+    fecha de inicio (std::string &)
+    fecha de fin (std::string &)
+    modulo (uin16_t)
+    exponente publico (uint8_t)
+    POST: Inicializa un certificado.
+    */
+    Certificado(uint32_t numeroSerie, std::string &sujeto, std::string &asunto, 
+    std::string &fechaInicio, std::string &fechaFin, ClaveRSA &clavesCliente);
 
     /*Crea un certificado con todos sus atributos nulos*/
     Certificado();
@@ -79,7 +94,7 @@ class Certificado : public Archivable {
     PRE: Recibe otro certificado (const Certificado &).
     POST: Crea un nuevo certificado por copia.
     */
-    Certificado(const Certificado &otroCertif);
+    Certificado(const Certificado &otroCertif) = delete;
 
     /*
     PRE: Recibe otro certificado (const Certificado &).
@@ -88,7 +103,7 @@ class Certificado : public Archivable {
     Devuelve una referencia al actual certificado 
     (Certificado &).
     */
-    Certificado& operator=(const Certificado &otroCertif);
+    Certificado& operator=(const Certificado &otroCertif) = delete;
 
     /*
     PRE: Recibe un numero serie (uint32_t).
@@ -106,19 +121,27 @@ class Certificado : public Archivable {
     PRE: Recibe las claves publicas del cliente (ClaveRSA &).
     POST: Actualiza la claves publicas del certificado 
     */
-    void setClave(ClaveRSA &clave);
+    //void setClave(ClaveRSA &clave);
 
     /*Devuelve el sujeto (std::string) del certificado*/
     std::string getSujeto();
 
     /*Devuelve la clave publica del certificado*/
-    ClaveRSA getClave();
+    //ClaveRSA getClave();
 
     /*Devuelve una representacion (std::string) del certificado actual.*/
     std::string a_string() const;
     
     /*Devuelve el hash (uint32_t) de certificado actual*/
     uint32_t hashear();
+
+    /*
+    PRE: Recibe un enteros sin signo de 4 bytes (uint32_t).
+    POST: Devuelve una encriptacion (uint32_t) del valor recibido 
+    a partir de las claves publicas del cliente que estan en 
+    el certificado.
+    */
+    uint32_t encriptar(uint32_t valor);
 
     /*
     PRE: Recibe un protocolo (Protocolo &) ya creadp.
@@ -160,12 +183,16 @@ class Certificado : public Archivable {
 
     /*
     PRE: Recibe una referencia a una linea (std::string &)
-    de un archivo que contiene un certificado.
+    de un archivo que contiene un certificado, una referencia
+    a un moduolo (uint16_t &) y una referencia a un exponente 
+    (uin8_t &).
     POST: Procesa la linea guardando informacion de ella
     segun corresponda, para modelizar el certificado del
     archivo en la clase actual.
+    Las lineas que correspondan al modulo y exponenete las procesa
+    y guarda su valor en las referencias recibidas.
     */
-    void _procesar_linea(std::string &linea);
+    void _procesar_linea(std::string &linea, uint16_t &mod, uint8_t &exp);
 
     /*
     PRE: Recibe un flujo de entrada que contenga informacion del 

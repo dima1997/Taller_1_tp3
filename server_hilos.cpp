@@ -1,9 +1,11 @@
+#include "server_hilos.h"
 #include <string>
 #include <vector>
 #include "common_protocolo.h"
 #include "common_certificado.h"
 #include "common_error.h"
-#include "server_hilos.h"
+#include "common_hilos_aux.h"
+#include "common_generador_certificados.h"
 
 /*
 PRE: Recibe un socket (Socket &) configurado para comunicarse 
@@ -44,28 +46,40 @@ certificado.
 void HCertificador::crear(Protocolo &proto){
     Certificado certif;
     try {
+        /*
         certif.recibir_parametros(proto);
         std::string sujeto = certif.getSujeto();
         ClaveRSA claveCliente = certif.getClave();
-        if (! this->sujetosClaves.agregarSiNoEsta(sujeto, claveCliente)){
+        */
+        GeneradorCertificados genCertif;
+        genCertif.recibir_parametros(proto);
+        //if (! this->sujetosClaves.agregarSiNoEsta(sujeto, claveCliente)){
+        if (! genCertif.agregarSujetoClave(this->sujetosClaves)){
             // Ya tiene certificado vigente
             proto.enviar_bytes(1,1);
             return;
         }
+
         proto.enviar_bytes(0,1); 
+        /*
         certif.setNumeroSerie(this->contador.obtener_y_sumar_uno());
         std::string asunto = "Taller de programacion 1"; 
         certif.setAsunto(asunto);
+        */
+        std::string asunto = "Taller de programacion 1";
+        Certificado certif = genCertif.generar(this->contador, asunto);
         certif.enviar(proto);
         uint32_t hashCertif = certif.hashear();
         uint32_t huellaCertif;
         huellaCertif = this->claveServidor.encriptar_privado(hashCertif);
-        huellaCertif = claveCliente.encriptar_publico(huellaCertif);
+        //huellaCertif = claveCliente.encriptar_publico(huellaCertif);
+        huellaCertif = certif.encriptar(huellaCertif);
         proto.enviar_bytes(huellaCertif,4);
         uint8_t seRecibioCorrectamente = proto.recibir_un_byte();
         if (seRecibioCorrectamente == 1){
             //El cliente no recibio la huella correcta
-            this->sujetosClaves.borrar(sujeto);
+            //this->sujetosClaves.borrar(sujeto);
+            genCertif.borrarSujeto(this->sujetosClaves);
         }
     } catch (OSError &error){
         std::string err = "Error al crear certificado.";

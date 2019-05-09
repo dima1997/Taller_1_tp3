@@ -4,8 +4,8 @@
 #include "common_socket.h"
 #include "common_claves.h"
 #include "common_error.h"
+#include "common_hilos_aux.h"
 #include "server_hilos.h"
-#include "server_hilos_aux.h"
 #include "server.h"
 #define CANTIDAD_CLIENTES_ESCUCHAR 20
 

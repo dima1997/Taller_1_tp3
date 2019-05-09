@@ -3,7 +3,7 @@
 #include <thread>
 #include "common_socket.h"
 #include "common_protocolo.h"
-#include "server_hilos_aux.h"
+#include "common_hilos_aux.h"
 
 //class Thread 
 

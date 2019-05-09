@@ -1,6 +1,8 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <sstream>
+#include <iomanip>
 #include "common_spliter.h"
 #include "common_error.h"
 #include "common_hash.h"
@@ -45,15 +47,32 @@ std::string a_hexa8_string(const uint8_t &valor){
     return std::string(buffer);
 }
 
+/*
+PRE: Recibe :
+numero de serie (uint32_t)
+sujeto (std::string &)
+asunto (std::string &)
+fecha de inicio (std::string &)
+fecha de fin (std::string &)
+modulo (uin16_t)
+exponente publico (uint8_t)
+POST: Inicializa un certificado.
+*/
+Certificado::Certificado(uint32_t numeroSerie, std::string &sujeto, 
+std::string &asunto, std::string &fechaInicio, std::string &fechaFin, 
+ClaveRSA &clavesCliente) : numeroSerie(numeroSerie), sujeto(sujeto),
+asunto(asunto), inicio(fechaInicio), fin(fechaFin), 
+clavesCliente(clavesCliente) {}
+
 /*Inicializa un certificado sin informacion.*/
 Certificado::Certificado(){
     this->numeroSerie = 0;
-    this->asunto = "";
     this->sujeto = "";
+    this->asunto = "";
     this->inicio = "";
     this->fin = "";
-    this->exp = 0;
-    this->mod = 0;
+    //this->exp = 0;
+    //this->mod = 0;
 }
 
 /*Destruye un certificado*/
@@ -66,21 +85,22 @@ POST: Construye un nuevo certificado por movimiento
 semantico de los atributos del recibido.
 El certificado recibidido queda en estado nulo 
 */
-Certificado::Certificado(Certificado &&otroCertif){
+Certificado::Certificado(Certificado &&otroCertif) 
+: clavesCliente(std::move(otroCertif.clavesCliente)){
     this->numeroSerie = otroCertif.numeroSerie;
-    this->asunto = otroCertif.asunto;
     this->sujeto = otroCertif.sujeto;
+    this->asunto = otroCertif.asunto;
     this->inicio = otroCertif.inicio;
     this->fin = otroCertif.fin;
-    this->exp = otroCertif.exp;
-    this->mod = otroCertif.mod;
+    //this->exp = otroCertif.exp;
+    //this->mod = otroCertif.mod;
     otroCertif.numeroSerie = 0;
-    otroCertif.asunto = "";
     otroCertif.sujeto = "";
+    otroCertif.asunto = "";
     otroCertif.inicio = "";
     otroCertif.fin = "";
-    otroCertif.exp = 0;
-    otroCertif.mod = 0; 
+    //otroCertif.exp = 0;
+    //otroCertif.mod = 0; 
 }
 
 /*
@@ -97,19 +117,20 @@ Certificado& Certificado::operator=(Certificado &&otroCertif){
         return *this;
     }
     this->numeroSerie = otroCertif.numeroSerie;
-    this->asunto = otroCertif.asunto;
     this->sujeto = otroCertif.sujeto;
+    this->asunto = otroCertif.asunto;
     this->inicio = otroCertif.inicio;
     this->fin = otroCertif.fin;
-    this->exp = otroCertif.exp;
-    this->mod = otroCertif.mod;
+    this->clavesCliente = std::move(otroCertif.clavesCliente);
+    //this->exp = otroCertif.exp;
+    //this->mod = otroCertif.mod;
     otroCertif.numeroSerie = 0;
-    otroCertif.asunto = "";
     otroCertif.sujeto = "";
+    otroCertif.asunto = "";
     otroCertif.inicio = "";
     otroCertif.fin = "";
-    otroCertif.exp = 0;
-    otroCertif.mod = 0; 
+    //otroCertif.exp = 0;
+    //otroCertif.mod = 0; 
     return *this;
 }
 
@@ -117,16 +138,17 @@ Certificado& Certificado::operator=(Certificado &&otroCertif){
 PRE: Recibe otro certificado (const Certificado &).
 POST: Crea un nuevo certificado por copia.
 */
+/*
 Certificado::Certificado(const Certificado &otroCertif){
     this->numeroSerie = otroCertif.numeroSerie;
-    this->asunto = otroCertif.asunto;
     this->sujeto = otroCertif.sujeto;
+    this->asunto = otroCertif.asunto;
     this->inicio = otroCertif.inicio;
     this->fin = otroCertif.fin;
     this->exp = otroCertif.exp;
     this->mod = otroCertif.mod;
 }
-
+*/
 /*
 PRE: Recibe otro certificado (const Certificado &).
 POST: Asigna por copia los atributos del certificado 
@@ -134,20 +156,21 @@ recibido al actual.
 Devuelve una referencia al actual certificado 
 (Certificado &).
 */
+/*
 Certificado& Certificado::operator=(const Certificado &otroCertif){
     if (this == &otroCertif){
         return *this;
     }
     this->numeroSerie = otroCertif.numeroSerie;
-    this->asunto = otroCertif.asunto;
     this->sujeto = otroCertif.sujeto;
+    this->asunto = otroCertif.asunto;
     this->inicio = otroCertif.inicio;
     this->fin = otroCertif.fin;
     this->exp = otroCertif.exp;
     this->mod = otroCertif.mod;
     return *this;
 }
-
+*/
 /*
 PRE: Recibe un numero serie (uint32_t).
 POST Setea en el certificaod el numero de serie recibido.
@@ -168,11 +191,12 @@ void Certificado::setAsunto(std::string &asunto){
 PRE: Recibe las claves publicas del cliente (ClaveRSA &).
 POST: Actualiza la claves publicas del certificado 
 */
+/*
 void Certificado::setClave(ClaveRSA &clave){
     this->exp = clave.getExpPublico();
     this->mod = clave.getModulo();
 }
-
+*/
 /*Devuelve el sujeto (std::string) del certificado*/
 std::string Certificado::getSujeto(){
     std::string sujeto = this->sujeto;
@@ -180,11 +204,12 @@ std::string Certificado::getSujeto(){
 }
 
 /*Devuelve la clave publica del certificado*/
+/*
 ClaveRSA Certificado::getClave(){
     ClaveRSA clave(this->exp, 0, this->mod);
     return std::move(clave);
 }
-
+*/
 /*Devuelve una representacion (std::string) del certificado actual.*/
 std::string Certificado::a_string() const{
     std::string certificado = "certificate:\n";
@@ -196,10 +221,12 @@ std::string Certificado::a_string() const{
     certificado += "\t\tnot before: " + this->inicio + "\n";
     certificado += "\t\tnot after: " + this->fin + "\n";
     certificado += "\tsubject public key info:\n";
-    certificado += "\t\tmodulus: " + std::to_string(this->mod);
-    certificado += " (" + a_hexa16_string(this->mod) + ")" + "\n"; 
-    certificado += "\t\texponent: " + std::to_string(this->exp); 
-    certificado += " (" + a_hexa8_string(this->exp) + ")"; 
+    //certificado += "\t\tmodulus: " + std::to_string(this->mod);
+    certificado += "\t\tmodulus: " + this->clavesCliente.representar_modulo() + "\n";
+    //certificado += " (" + a_hexa16_string(this->mod) + ")" + "\n"; 
+    //certificado += "\t\texponent: " + std::to_string(this->exp);
+    certificado += "\t\texponent: " + this->clavesCliente.representar_exp_publico(); 
+    //certificado += " (" + a_hexa8_string(this->exp) + ")"; 
     return std::move(certificado);
 }
 
@@ -208,6 +235,16 @@ uint32_t Certificado::hashear(){
     std::string certificado = this->a_string();;
     Hash hash;
     return hash.hashear(certificado, certificado.size());
+}
+
+/*
+PRE: Recibe un enteros sin signo de 4 bytes (uint32_t).
+POST: Devuelve una encriptacion (uint32_t) del valor recibido 
+a partir de las claves publicas del cliente que estan en 
+el certificado.
+*/
+uint32_t Certificado::encriptar(uint32_t valor){
+    return this->clavesCliente.encriptar_publico(valor);
 }
 
 /*
@@ -220,12 +257,15 @@ Levanta OSError en caso de error.
 void Certificado::recibir(Protocolo &proto){
     try {
         this->numeroSerie = proto.recibir_cuatro_bytes();
-        this->asunto = proto.recibir_mensaje();
         this->sujeto = proto.recibir_mensaje();
+        this->asunto = proto.recibir_mensaje();
         this->inicio = proto.recibir_mensaje();
         this->fin = proto.recibir_mensaje();
+        this->clavesCliente.recibir_publico(proto);
+        /*
         this->mod = proto.recibir_dos_bytes();
         this->exp = proto.recibir_un_byte();
+        */
     } catch (OSError &error){
         std::string err = "Error al recibir certificado.";
         throw OSError(__FILE__,__LINE__,err.data());
@@ -242,12 +282,15 @@ Levanta OSError en caso de error.
 void Certificado::enviar(Protocolo &proto){
     try {
         proto.enviar_bytes(this->numeroSerie, 4);
-        proto.enviar_mensaje(this->asunto);
         proto.enviar_mensaje(this->sujeto);
+        proto.enviar_mensaje(this->asunto);
         proto.enviar_mensaje(this->inicio);
         proto.enviar_mensaje(this->fin);
+        this->clavesCliente.enviar_publico(proto);
+        /*
         proto.enviar_bytes(this->mod, 2);
         proto.enviar_bytes(this->exp, 1);
+        */
     } catch (OSError &error){
         std::string err = "Error al enviar certificado.";
         throw OSError(__FILE__,__LINE__,err.data());
@@ -262,6 +305,7 @@ POST: Recibe los parametros para crear el certificado
 en el orden que los envia el metodo enviar_parametros.
 Levanta OSError en caso de error.
 */
+/*
 void Certificado::recibir_parametros(Protocolo &proto){
     try {
         this->sujeto = proto.recibir_mensaje();
@@ -274,15 +318,16 @@ void Certificado::recibir_parametros(Protocolo &proto){
         throw OSError(__FILE__,__LINE__,err.data());
     }
 }
-
+*/
 /*
 PRE: Recibe un protocolo (Protocolo &) creado 
-para enviar informacion una autoridad certificante.
+para enviar informacion a una autoridad certificante.
 POST: Envia los parametros que la autoridad necesita
 del certificado actual para certificarlo, en el orden
 que la autoridad certificante los espera.
 Levanta OSError en caso de error. 
 */
+/*
 void Certificado::enviar_parametros(Protocolo &proto){
     try {
         proto.enviar_mensaje(this->sujeto);
@@ -295,7 +340,7 @@ void Certificado::enviar_parametros(Protocolo &proto){
         throw OSError(err.data());
     }
 }
-
+*/
 /*
 PRE: Recibe un flujo de entrada que contenga informacion del 
 certificado a crear : subject, fecha de inicio, fecha de finalizacion.
@@ -323,12 +368,16 @@ void Certificado::cargar_info(std::istream &in){
 
 /*
 PRE: Recibe una referencia a una linea (std::string &)
-de un archivo que contiene un certificado.
+de un archivo que contiene un certificado, una referencia
+a un moduolo (uint16_t &) y una referencia a un exponente 
+(uin8_t &).
 POST: Procesa la linea guardando informacion de ella
 segun corresponda, para modelizar el certificado del
 archivo en la clase actual.
+Las lineas que correspondan al modulo y exponenete las procesa
+y guarda su valor en las referencias recibidas.
 */
-void Certificado::_procesar_linea(std::string &linea){
+void Certificado::_procesar_linea(std::string &linea, uint16_t &mod, uint8_t &exp){
     size_t pos = 0;
     std::string lineaSinTabs = linea; 
     while ((pos = lineaSinTabs.find('\t')) != std::string::npos) {
@@ -367,14 +416,16 @@ void Certificado::_procesar_linea(std::string &linea){
         std::vector<std::string> modulo;
         separador = " ";
         modulo = spliter.split(valor, separador);
-        this->mod = (uint16_t) atoi(modulo[0].data());
+        //this->mod = (uint16_t) atoi(modulo[0].data());
+        mod = (uint16_t) atoi(modulo[0].data());
         return;
     }
     if (campo == "exponent"){
         std::vector<std::string> exponente;
         separador = " ";
         exponente = spliter.split(valor, separador);
-        this->exp = (uint8_t) atoi(exponente[0].data());
+        //this->exp = (uint8_t) atoi(exponente[0].data());
+        exp = (uint8_t) atoi(exponente[0].data());
         return;
     }
     //Cualquier otra cosa la ignoramos
@@ -390,10 +441,15 @@ flujo.
 */
 void Certificado::cargar(std::istream &in){
     std::string linea;
+    uint16_t modulo;
+    uint8_t exp;
+
     while (in.good()){
         std::getline(in, linea);
-        this->_procesar_linea(linea);
+        this->_procesar_linea(linea, modulo, exp);
     }
+
+    this->clavesCliente = std::move(ClaveRSA(exp, 0, modulo));
 }
 
 /*

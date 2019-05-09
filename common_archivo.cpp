@@ -1,6 +1,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+//#include "client_generador_certificados.h"
 #include "common_certificado.h"
 #include "common_error.h"
 #include "common_archivable.h"
@@ -41,6 +42,14 @@ void Archivo::cerrar(){
     if (this->archivo.is_open()){
         this->archivo.close();
     }
+}
+
+/*
+Devuelve el flujo de entrada (istream &) 
+de archivo abierto.
+*/
+std::istream& Archivo::getFlujoEntrada(){
+    return this->archivo;
 }
 
 /*
@@ -95,3 +104,28 @@ POST: Carga el certificado.
 void ArchivoCertif::cargar_info(Certificado &certif){
     certif.cargar_info(this->archivo);
 }
+
+/*
+PRE: Recibe el nombre del archivo con la informacion 
+para crear la instancia de clase correspondiente.
+POST: Inicializa un archivo factory.
+*/
+/*
+ArchivoFactory::ArchivoFactory(std::string &nombreArchivo)
+: Archivo(nombreArchivo) {}
+*/
+/*Destruye un archivo factory*/
+//ArchivoFactory::~ArchivoFactory() {}
+
+/*
+Pre: Recibe la claves publicas (ClaveRSA &) de un cliente 
+para generar un certificado.
+POST: Devuelve un generador de certificados (GeneradorCertificados) 
+ya incialziado. 
+*/
+/*
+GeneradorCertificados ArchivoFactory::crear_generador_certificados(
+ClaveRSA &clavesCliente){
+    return std::move(GeneradorCertificados(this->archivo, clavesCliente));
+}
+*/

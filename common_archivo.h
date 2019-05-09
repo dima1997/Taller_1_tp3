@@ -1,7 +1,9 @@
 #ifndef ARCHIVO_H
 #define ARCHIVO_H
 #include <fstream>
+#include <iostream>
 #include "common_certificado.h"
+
 
 class Archivo {
     /*
@@ -42,6 +44,12 @@ class Archivo {
 
     /*Cierra el archivo si esta abierto*/
     void cerrar();
+
+    /*
+    Devuelve el flujo de entrada (istream &) 
+    de archivo abierto.
+    */
+    std::istream& getFlujoEntrada();
 };
 
 class ArchivoCertif : public Archivo{
@@ -64,6 +72,28 @@ class ArchivoCertif : public Archivo{
     */
     void cargar_info(Certificado &certif);
 };
+/*
+class ArchivoFactory : public Archivo {
+public:
+*/
+    /*
+    PRE: Recibe el nombre del archivo con la informacion 
+    para crear la instancia de clase correspondiente.
+    POST: Inicializa un archivo factory.
+    */
+    //ArchivoFactory(std::string &nombreArchivo);
 
+    /*Destruye un archivo factory*/
+    //~ArchivoFactory();
 
+    /*
+    Pre: Recibe la claves publicas (ClaveRSA &) de un cliente 
+    para generar un certificado.
+    POST: Devuelve un generador de certificados (GeneradorCertificados) 
+    ya incialziado. 
+    */
+    //GeneradorCertificados crear_generador_certificados(ClaveRSA &clavesCliente);
+/*
+};
+*/
 #endif // ARCHIVO_H

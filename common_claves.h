@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <string>
 #include "common_archivable.h"
+#include "common_protocolo.h"
 
 struct ClaveRSA : public Archivable{
     public:
@@ -129,6 +130,36 @@ struct ClaveRSA : public Archivable{
 
     /*Devuelve el modulo (uint16_t) de la clave*/
     uint16_t getModulo();
+
+    /*
+    PRE: Recibe un protocolo de comunicacion (Protocolo &).
+    POST: Envia a traves del protocolo :
+        1°) Su modulo, como entero sin signo de 2 bytes
+        2°) Su exponente, como entero sin signo de 1 byte.
+    Levanta OSError en caso de error. 
+    */
+    void enviar_publico(Protocolo &proto);
+
+    /*
+    PRE: Recibe un protocolo de comunicacion (Protocolo &).
+    POST: Recibe (y se carga), a traves del protocolo : 
+        1°) Un modulo, como entero sin signo de 2 bytes
+        2°) Un exponente publico, como entero sin signo de 1 byte.
+    Levanta OSError en caso de error. 
+    */
+    void recibir_publico(Protocolo &proto);
+
+    /*
+    Devuelve una representacion del modulo de la clave:
+    <modulo en decimal> (<modulo en hexagesimal>)
+    */
+    std::string representar_modulo() const;
+
+    /*
+    Devuelve una representacion del exponente publico de la clave:
+    <exponente publico en decimal> (<exponente publico en hexagesimal>)
+    */
+    std::string representar_exp_publico() const;
 };
 
 /*Sobrecarga del operador >> para ClaveRSA*/

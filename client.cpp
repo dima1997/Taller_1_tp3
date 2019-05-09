@@ -6,6 +6,8 @@
 #include "common_certificado.h"
 #include "common_error.h"
 #include "common_archivo.h"
+
+#include "common_generador_certificados.h"
 #include "client.h"
 
 /*
@@ -145,18 +147,18 @@ Levanta OSError en caso de error.
 void Cliente::crear_certif(const char *nombreInfoCertif, 
 const char *nombreClavesClnt, const char *nombreClavesSvr){
     try {
-        Certificado certif = std::move(this->cargar_info(nombreInfoCertif));
         ClaveRSA clavesClnt = std::move(this->cargar_claves(nombreClavesClnt));
-        certif.setClave(clavesClnt);
+        GeneradorCertificados genCertif(nombreInfoCertif, clavesClnt);
         ClaveRSA clavesSvr = std::move(this->cargar_claves(nombreClavesSvr));
         Protocolo proto(this->skt);
         proto.enviar_bytes(0,1);
-        certif.enviar_parametros(proto);
+        genCertif.enviar_parametros(proto);
         uint8_t respuesta = proto.recibir_un_byte();
         if (respuesta == 1){
             std::cout << "Error: ya existe un certificado.\n";
             return;
         }   
+        Certificado certif;
         certif.recibir(proto);
         uint32_t huellaSvr = proto.recibir_cuatro_bytes();
         uint32_t hashSvr;

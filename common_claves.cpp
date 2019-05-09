@@ -1,9 +1,13 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <sstream>
+#include <iomanip>
 #include "common_hash.h"
 #include "common_claves.h"
 #include "common_spliter.h"
+#include "common_protocolo.h"
+#include "common_error.h"
 
 /*Crea una clave por default, con todos sus atributos nulos.*/
 ClaveRSA::ClaveRSA() : expPublico(0), expPrivado(0), modulo(0){}
@@ -185,6 +189,71 @@ uint8_t ClaveRSA::getExpPublico(){
 /*Devuelve el modulo (uint16_t) de la clave*/
 uint16_t ClaveRSA::getModulo(){
     return this->modulo;
+}
+
+/*
+PRE: Recibe un protocolo de comunicacion (Protocolo &).
+POST: Envia a traves del protocolo :
+    1°) Su modulo, como entero sin signo de 2 bytes
+    2°) Su exponente publico, como entero sin signo de 1 byte.
+Levanta OSError en caso de error. 
+*/
+void ClaveRSA::enviar_publico(Protocolo &proto){
+    try {
+        proto.enviar_bytes(this->modulo,2);
+        proto.enviar_bytes(this->expPublico,1);
+    } catch (OSError &error){
+        std::string err = "Error al enviar claves publicas";
+        throw OSError(__FILE__,__LINE__,err.data());
+    }
+}
+
+/*
+PRE: Recibe un protocolo de comunicacion (Protocolo &).
+POST: Recibe (y se carga), a traves del protocolo : 
+    1°) Un modulo, como entero sin signo de 2 bytes
+    2°) Un exponente publico, como entero sin signo de 1 byte.
+Levanta OSError en caso de error. 
+*/
+void ClaveRSA::recibir_publico(Protocolo &proto){
+    try {
+        this->modulo = proto.recibir_dos_bytes();
+        this->expPublico = proto.recibir_un_byte();
+    } catch (OSError &error) {
+        std::string err = "Error al recibir claves publicas";
+        throw OSError(__FILE__,__LINE__, err.data());
+    }
+}
+
+/*
+certificado += "\t\tmodulus: " + std::to_string(this->mod);
+    certificado += " (" + a_hexa16_string(this->mod) + ")" + "\n"; 
+    certificado += "\t\texponent: " + std::to_string(this->exp); 
+    certificado += " (" + a_hexa8_string(this->exp) + ")"; 
+*/
+
+/*
+Devuelve una representacion del modulo de la clave:
+<modulo en decimal> (<modulo en hexagesimal>)
+*/
+std::string ClaveRSA::representar_modulo() const {
+    std::stringstream representacion;
+    representacion << std::dec << this->modulo << " " << "(";
+    representacion << std::hex << "0x" << std::setfill('0') << std::setw(4);
+    representacion << this->modulo << ")";
+    return std::move(representacion.str());
+}
+
+/*
+Devuelve una representacion del exponente publico de la clave:
+<exponente publico en decimal> (<exponente publico en hexagesimal>)
+*/
+std::string ClaveRSA::representar_exp_publico() const {
+    std::stringstream representacion;
+    representacion << std::dec << ((int)this->expPublico) << " " << "(";
+    representacion << std::hex << "0x" << std::setfill('0') << std::setw(2);
+    representacion << ((int)this->expPublico) << ")";
+    return std::move(representacion.str());
 }
 
 /*Sobrecarga del operador >> para ClaveRSA*/
