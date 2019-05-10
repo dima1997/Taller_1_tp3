@@ -1,16 +1,17 @@
-#include <iostream>
-#include <vector>
-#include <string>
-#include <sstream>
-#include <iomanip>
-#include "common_hash.h"
 #include "common_claves.h"
-#include "common_spliter.h"
+
+#include "common_hash.h"
+#include "common_encriptador.h"
 #include "common_protocolo.h"
 #include "common_error.h"
 
+#include <string>
+#include <iostream>
+#include <sstream>
+#include <iomanip>
+
 /*Crea una clave por default, con todos sus atributos nulos.*/
-ClaveRSA::ClaveRSA() : expPublico(0), expPrivado(0), modulo(0){}
+ClaveRSA::ClaveRSA() : expPublico(0), expPrivado(0), modulo(0) {}
 
 /*
 PRE: REcibe un exponente publico: entero sin 
@@ -21,32 +22,45 @@ entero sin signo de 2 bytes (uint16_t).
 POST: Crea una clave rsa.
 */
 ClaveRSA::ClaveRSA(uint8_t expPublico, uint8_t expPrivado, uint16_t modulo)
-: expPublico(expPublico), expPrivado(expPrivado), modulo(modulo){}
+: expPublico(expPublico), expPrivado(expPrivado), modulo(modulo) {}
+
+/*
+PRE: Recibe el nombre de un archivo que contenga claves de la forma:
+<exponente publico> <exponente privado> <modulo>
+o
+<exponente publico> <modulo>
+POST: Inicializa una clave RSA a partir de la informacion del archivo.
+*/
+ClaveRSA::ClaveRSA(std::string &nombreArchivoClaves) {
+    ifstream in(nombreArchivoClaves, std::ios::in);
+    if (! in.is_open()){
+        std::string err = "Error al abrir archivo de claves."
+        throw OSError(__FILE__,__LINE__,err.data());
+    }
+    std::string linea;
+    std::getline(in, linea);
+    this->actualizar(linea);
+}
 
 /*Destruye la clave rsa*/
 ClaveRSA::~ClaveRSA(){}
 
-
-ClaveRSA::ClaveRSA(const ClaveRSA &otraClave){
-    this->expPublico = otraClave.expPublico;
-    this->expPrivado = otraClave.expPrivado;
-    this->modulo = otraClave.modulo;
-}
 /*
+Copia explicita.
 PRE: Recibe una referencia a otra clave (ClaveRSA &).
 POST: Copia todos los atributos de clave recibida, a 
 la clave actual.
-Devuelve un referencia a la clave actual
 */
-ClaveRSA& ClaveRSA::operator=(const ClaveRSA &otraClave){
+void ClaveRSA::copiarDesde(const ClaveRSA &otraClave) {
     if (this == &otraClave){
-        return *this;
+        return;
     }
     this->expPublico = otraClave.expPublico;
     this->expPrivado = otraClave.expPrivado;
     this->modulo = otraClave.modulo;
-    return *this;
 }
+
+// move semantics
 
 /*
 PRE: Recibe una doble referencia a otra clave 
@@ -118,6 +132,7 @@ encontrados en el archivo. En el segundo caso, el exponente
 privado se actualiza a valor nulo.
 */
 void ClaveRSA::actualizar(std::string &claveCadena){
+    /*
     std::vector<std::string> partesClave;
     std::string separador = " ";
     Spliter spliter;
@@ -128,6 +143,22 @@ void ClaveRSA::actualizar(std::string &claveCadena){
     } else {
         this->expPrivado = atoi(partesClave[1].data());
         this->modulo = atoi(partesClave[2].data());
+    }
+    */
+    std::stringstream claveStream;
+    claveStream.str(claveCadena);
+    std::string separador = " ";
+    std::string expPublicoCad;
+    std::getline(claveStream, expPublicoCad, separador);
+    this->expPublico = atoi(expPublicoCad.data());
+    std::string siguiente;
+    std::getline(claveStream, siguiente, separador);
+    //Cuidado aqui !!! 
+    if (! claveStream.good()){
+        this->modulo = atoi(siguiente.data()); 
+    } else {
+        this->expPrivado = atoi(siguiente.data());;
+        this->modulo = atoi(claveStream.str().data()); 
     }
 }
 
@@ -149,46 +180,6 @@ encriptado con el exponente privado.
 uint32_t ClaveRSA::encriptar_privado(uint32_t valor){
     Encriptador encrip;
     return encrip.encriptar(valor, this->expPrivado, this->modulo);
-}
-
-
-/*
-PRE: Recibe el nombre de un flujo de entrada (std::istream &) 
-que contiene las claves publicas y/o privadas de una entidad, 
-de la forma:
-<exponente-publico> <exponente-privado> <modulo>
-o
-<exponente-publico> <modulo>
-POST: Actualiza los valores de la claves rsa, con los 
-encontrados en el archivo.
-*/
-void ClaveRSA::cargar(std::istream &in){
-    std::string linea;
-    std::getline(in, linea);
-    this->actualizar(linea);
-}
-
-/*
-PRE: Recibe un flujo de salida (std::ostream &).
-POST: Escribe la representacion completa de la clave
-en el flujo:
-<exponente publico> <exponente privado> <modulo>
-*/
-void ClaveRSA::guardar(std::ostream &out) const {
-    out << this->a_string();
-}
-
-/*
-Devuelve el exponente publico (uint8_t) de 
-la clave
-*/
-uint8_t ClaveRSA::getExpPublico(){
-    return this->expPublico;
-}
-
-/*Devuelve el modulo (uint16_t) de la clave*/
-uint16_t ClaveRSA::getModulo(){
-    return this->modulo;
 }
 
 /*
@@ -226,13 +217,6 @@ void ClaveRSA::recibir_publico(Protocolo &proto){
 }
 
 /*
-certificado += "\t\tmodulus: " + std::to_string(this->mod);
-    certificado += " (" + a_hexa16_string(this->mod) + ")" + "\n"; 
-    certificado += "\t\texponent: " + std::to_string(this->exp); 
-    certificado += " (" + a_hexa8_string(this->exp) + ")"; 
-*/
-
-/*
 Devuelve una representacion del modulo de la clave:
 <modulo en decimal> (<modulo en hexagesimal>)
 */
@@ -254,16 +238,4 @@ std::string ClaveRSA::representar_exp_publico() const {
     representacion << std::hex << "0x" << std::setfill('0') << std::setw(2);
     representacion << ((int)this->expPublico) << ")";
     return std::move(representacion.str());
-}
-
-/*Sobrecarga del operador >> para ClaveRSA*/
-std::istream& operator>>(std::istream &in, ClaveRSA &clave){
-    clave.cargar(in);
-    return in;
-}
-
-/*Sobrecarga del operador << para ClaveRSA*/
-std::ostream& operator<<(std::ostream &out, ClaveRSA &clave){
-    clave.guardar(out);
-    return out;
 }

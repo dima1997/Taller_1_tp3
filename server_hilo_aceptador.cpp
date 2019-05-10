@@ -1,9 +1,12 @@
 #include "server_hilo_aceptador.h"
 
+#include "server_hilo_certificador.h"
+
 #include "common_socket.h"
 #include "common_error.h"
 #include "common_contador_bloq.h"
 #include "common_mapa_bloq.h"
+#include "common_claves.h"
 
 #include <string>
 #include <vector>
@@ -46,6 +49,7 @@ void HAceptador::run(){
         hiloCertfcdor = new HCertificador(sktActivo, contador, mapa, claveSvr);
         hiloCertfcdor->start();
         hilos.push_back(hiloCertfcdor);
+        /*
         std::vector<Thread*> temp; //aux para iterar
         for (size_t i = 0; i < hilos.size(); ++i){
             if (hilos[i]->is_dead()){
@@ -56,11 +60,29 @@ void HAceptador::run(){
             }
         }
         hilos = std::move(temp);
+        */
+        for (auto it = hilos.begin(); it != hilos.end(); ) {
+            if (*it->is_dead()) {
+                *it->join();
+                delete *it;
+                it = hilos.erase(it);
+            } else {
+                ++it;
+            }
+        }
+
         //Ahora solo quedan los hilos que siguen vivos
     }
+    /*
     for (size_t i = 0; i < hilos.size(); ++i){
         hilos[i]->join();
         delete hilos[i];
+    }
+    */
+    for (auto it = hilos.begin(); it != hilos.end(); ) {
+        *it->join();
+        delete *it;
+        it = hilos.erase(it);
     }
     this->estaMuerto = true;
     return;

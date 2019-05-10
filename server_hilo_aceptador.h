@@ -1,14 +1,12 @@
-#ifndef HILOS_H
-#define HILOS_H
-#include <thread>
-#include "common_thread.h"
 #ifndef HILO_ACEPTADOR_H
 #define HILO_ACEPTADOR_H
 
+#include "common_thread.h"
 #include "common_socket.h"
 #include "common_protocolo.h"
 #include "common_contador_bloq.h"
 #include "common_mapa_bloq.h"
+#include "commnon_claves.h"
 
 class HAceptador : public Thread {
     public:

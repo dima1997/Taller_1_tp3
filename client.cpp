@@ -79,13 +79,14 @@ POST: Guardar el contenido del certificado en un
 archivo de nombre: "<sujeto del certificado>.cert"
 Levanta OSError en caso de error.
 */
+/*
 void Cliente::guardar_certif(Certificado &certif){
     std::string nombreArchCertif = certif.getSujeto() + ".cert";
     Archivo arch(nombreArchCertif.data(),'w');
     arch << certif;
     arch.cerrar();
 }
-
+*/
 /*
 PRE: Recibe un certificado (Certificado &).
 POST: devuelve (uint32_t) e imprime el hash 
@@ -171,7 +172,8 @@ const char *nombreClavesClnt, const char *nombreClavesSvr){
             return;
         }
         proto.enviar_bytes(0,1);
-        this->guardar_certif(certif);
+        //this->guardar_certif(certif);
+        certif.guardar();
     } catch (OSError &error){
         std::string err = "Error al crear certificado.";
         throw OSError(__FILE__,__LINE__,err.data());
@@ -189,7 +191,8 @@ Levanta OSError en caso de error.
 void Cliente::revocar_certif(const char *nombreCertif, 
 const char *nombreClavesClnt, const char *nombreClavesSvr){
     try {
-        Certificado certif = std::move(this->cargar_certif(nombreCertif));
+        Certificado certif(nombreCertif);
+        //Certificado certif = std::move(this->cargar_certif(nombreCertif));
         ClaveRSA clavesClnt = std::move(this->cargar_claves(nombreClavesClnt));
         ClaveRSA clavesSvr = std::move(this->cargar_claves(nombreClavesSvr));
         Protocolo proto(this->skt);

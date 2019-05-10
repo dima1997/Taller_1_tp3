@@ -1,11 +1,13 @@
 #include "common_generador_certificados.h"
 
-#include "common_hilos_aux.h"
+#include "common_mapa_bloq.h"
+#include "common_contador_bloq.h"
 #include "common_tiempo.h"
 #include "common_claves.h"
 #include "common_protocolo.h"
 #include "common_error.h"
-#include "common_archivo.h"
+
+#include <fstream>
 #include <iostream>
 
 #define VIGENCIA_CERTIFICADO 30
@@ -38,10 +40,12 @@ certificado se tomara la fecha actual como inicio, la 30
 dias despues la de finalizacion. 
 */
 GeneradorCertificados::GeneradorCertificados(const char *nombreArchivoInfo, 
-ClaveRSA &clavesCliente) : clavesCliente(clavesCliente) {
-        Archivo arch(nombreArchivoInfo, 'r'); 
-        //Si se levanta un error aqui, ya se corta la ejecucion por si solos
-        std::istream &in = arch.getFlujoEntrada();
+ClaveRSA &clavesCliente) : clavesCliente(clavesCliente) { 
+        std::ifstream in(nombreArchivoInfo, std::ios::in);
+        if (! in.is_open()){
+            std::string err = "Error al abrir archivo en generador.";
+            throw OSError(__FILE__,__LINE__,err.data());
+        }
         std::string linea;
         std::getline(in, linea);
         this->sujeto = std::move(linea);
@@ -103,7 +107,6 @@ GeneradorCertificados &&otroGenerador) {
     otroGenerador.fechaInicio = "";
     otroGenerador.fechaFin = "";
     otroGenerador.clavesCliente = std::move(ClaveRSA()); //Tal ves no sea necesario
-    //No puedo poner la otra referencias a claves a estado nulo.
     return *this;
 }
 
@@ -150,8 +153,8 @@ PRE: Recibe un mapa bloqueante (MapaBloq &) de sujetos asociados claves RSA.
 POST: Devuelve true si agrego un nuevo (que no existia antes) sujeto y clave 
 al mapa; false en caso contrario (y no se agrego nada). 
 */
-bool GeneradorCertificados::agregarSujetoClave(MapaBloq &sujetosClaves){
-    return sujetosClaves.agregarSiNoEsta(this->sujeto, this->clavesCliente);
+bool GeneradorCertificados::agregar_sujeto_clave_mapa(MapaBloq &sujetosClaves){
+    return sujetosClaves.agregar_si_no_esta(this->sujeto, this->clavesCliente);
     //pasar a snake_case en mapBloq
 }
 
@@ -171,6 +174,6 @@ Certificado GeneradorCertificados::generar(ContadorBloq &contador, std::string &
 PRE: Recibe un mapa bloqueante de sujetos y claves.
 POST: Elimina del mapa al sujeto del ceritificado si es que esta.
 */
-void GeneradorCertificados::borrarSujeto(MapaBloq &sujetosClaves){
+void GeneradorCertificados::borrar_sujeto_mapa(MapaBloq &sujetosClaves) {
     sujetosClaves.borrar(this->sujeto);
 }

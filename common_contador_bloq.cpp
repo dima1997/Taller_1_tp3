@@ -1,10 +1,34 @@
 #include "commmon_contador_bloq.h"
 
-
-// tda ContadorBloq
+#include <iostream>
 
 /*Crea un contador bloqueanteinicializado en uno.*/
 ContadorBloq::ContadorBloq() : cuenta(1){}
+
+/*
+PRE: Recibe un flujo de entrada (istream &) cuyo puntero
+apunte a una linea que contenga el numero de cuenta inicial 
+del contador.
+POST: Inicializa un contador a partir de dicha informacion.
+El puntero del flujo queda en la siguiente linea a la recibida.
+Si el puntero del flujo esta en el final del mismo, entonces el 
+contador se iniciara en 1, por defecto
+*/
+ContadorBloq::ContadorBloq(std::istream &in){
+    uint32_t valorDefecto = 1;
+    if (! in.good()){
+        this->cuenta = valorDefecto;
+        return;
+    }
+    std::string linea;
+    std::getline(in, linea);
+    if (! in.good()){
+        this->cuenta = valorDefecto;
+        return;
+    }
+    std::lock_guard<std::mutex> lock(this->centinela);
+    this->cuenta = (uint32_t) stoi(linea);
+}
 
 /*Destruye un contador bloqueante.*/
 ContadorBloq::~ContadorBloq(){}
@@ -25,33 +49,6 @@ con valor del contador actual.
 void ContadorBloq::guardar(std::ostream &out) const {
     std::lock_guard<std::mutex> lock(this->centinela);
     out << std::to_string(this->cuenta) << "\n";
-}
-
-/*
-PRE: Recibe un flujo de entrada (istream &), tal que su
-primer linea sea un numero entero si signo de 4 bytes.
-POST: Actualiza el valor de cuenta del contador con dicha 
-informacion. 
-El puntero al flujo recibido quedara en la siguiente linea
-a la recibida.
-*/
-void ContadorBloq::cargar(std::istream &in){
-    if (! in.good()){
-        return;
-    }
-    std::string linea;
-    std::getline(in, linea);
-    if (! in.good()){
-        return;
-    }
-    std::lock_guard<std::mutex> lock(this->centinela);
-    this->cuenta = (uint32_t) stoi(linea);
-}
-
-/*Sobrecarga del operador >> de istream para clase ContadorBloq*/
-std::istream& operator>>(std::istream &in, ContadorBloq &contador){
-    contador.cargar(in);
-    return in;
 }
 
 /*Sobrecarga del operador << de ostream para clase ContadorBloq*/

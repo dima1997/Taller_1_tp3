@@ -16,23 +16,6 @@ Servidor::Servidor(){}
 Servidor::~Servidor(){}
 
 /*
-PRE: Recibe el nombre (const char *) de un archivo tipo index, que
-contiene informacion sobre el proximo numero de serie a utilizar y
-sobre los certificados ya creados; un contador (ContadorBloq &) y
-un mapa (MapaBloq &) de sujetos y claves de certificados creados.
-POST: Carga el contador y mapa recibios con la informacion del 
-archivo.
-Levanta OSError en caso de error. 
-*/
-void Servidor::cargar_contador_mapa(const char* nombreArchIndice, 
-ContadorBloq &contador, MapaBloq &sujetosClaves){
-    Archivo arch(nombreArchIndice, 'r');
-    arch >> contador;
-    arch >> sujetosClaves;
-    arch.cerrar();
-}
-
-/*
 PRE: Recibe el nombre del archivo donde guardar el proximo
 numero de serie a utilizar e informacion sobre los certificados
 creados; el contador (ContadorBloq &) de numeros de serie, y el
@@ -43,26 +26,10 @@ Levanta OSError en caso de error.
 */
 void Servidor::guardar_contador_mapa(const char* nombreArchIndice, 
 ContadorBloq &contador, MapaBloq &sujetosClaves){
-    Archivo arch(nombreArchIndice, 'w');
-    arch << contador;
-    arch << sujetosClaves;
-    arch.cerrar();
+    std::ofstream out(nombreArchivoIndice, std::ios::out);
+    out << contador;
+    out << sujetosClaves;
 }
-
-/*
-PRE: Recibe el nombre de un archivo que contenga claves 
-publicas y/o privadas.
-POST: Devuelve una clave (ClaveRSA) cargado con la 
-informacion del archivo.
-Levanta OSError en caso de error. 
-*/
-ClaveRSA Servidor::cargar_claves(const char* nombreClaves){
-    ClaveRSA clave;
-    Archivo arch(nombreClaves, 'r');
-    arch >> clave;
-    arch.cerrar();
-    return std::move(clave);
-} 
 
 /*
 PRE: Recibe un 3 cadenas de caracteres (const char *): el puerto
@@ -73,15 +40,20 @@ de certificados creados.
 POST: Ejecuta un servidor que crea y revoca certificados
 Levanta OSError en caso de error.
 */
-void Servidor::ejecutar(const char* puerto, const char* claves, 
-const char* indice){
+void Servidor::ejecutar(const char* nombrePuerto, 
+const char* nombreArchivoClaves, const char* nombreArchivoIndice){
     try{
-        Socket sktPasivo(puerto);
+        Socket sktPasivo(nombrePuerto);
         sktPasivo.escuchar(CANTIDAD_CLIENTES_ESCUCHAR);
-        ContadorBloq contador;
-        MapaBloq sujetosClaves;
-        this->cargar_contador_mapa(indice, contador, sujetosClaves);
-        ClaveRSA claveSvr = std::move(this->cargar_claves(claves));
+        ifstream in(nombreArchivoIndice, std::ios::out);
+        //Chequear si esta abierto y levanta errores.
+        ContadorBloq contador(in);
+        MapaBloq sujetosClaves(in);
+        in.close(); 
+        //Lo cierro por que ya no lo necesito y el fin del scope esta lejos
+        //this->cargar_contador_mapa(nombreArchivoIndice,contador,sujetosClaves);
+        //ClaveRSA claveSvr = std::move(this->cargar_claves(claves));
+        ClaveRSA claveSvr(nombreArchivoClaves);
         HAceptador hiloAceptador(sktPasivo, contador, sujetosClaves, claveSvr);
         hiloAceptador.start();
         char caracterSalida = 0;
@@ -93,7 +65,7 @@ const char* indice){
         hiloAceptador.join();
         this->guardar_contador_mapa(indice, contador, sujetosClaves);
     } catch (OSError &e){
-        std::string err = "Error al ejecutar servidor";
+        std::string err = "Error al ejecutar servidor.";
         throw OSError(__FILE__,__LINE__, err.data());
     }
     return;
@@ -109,7 +81,7 @@ int main(int argc, const char* argv[]) {
     try {
         Servidor servidor;
         servidor.ejecutar(puerto, claves, indice);
-    } catch (OSError &e) {
+    } catch (OSError &error) {
         return 1;
     }
     return 0;

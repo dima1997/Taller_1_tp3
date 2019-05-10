@@ -1,8 +1,9 @@
+#include "common_error.h"
+
 #include <errno.h>
 #include <cstdio>
 #include <cstdarg>
 #include <cstring>
-#include "common_error.h"
 
 /*Construye un OSerror*/
 OSError::OSError(const char* fmt, ...) noexcept {
@@ -18,6 +19,6 @@ OSError::OSError(const char* fmt, ...) noexcept {
 /*
 Devuelve una descripcion del error.
 */
-const char* OSError::what()const noexcept{
+const char* OSError::what() const noexcept{
     return this->msg_error;
 }

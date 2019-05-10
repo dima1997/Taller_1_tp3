@@ -55,7 +55,7 @@ class Cliente {
     archivo de nombre: "<sujeto del certificado>.cert"
     Levanta OSError en caso de error.
     */
-    void guardar_certif(Certificado &certif);
+    //void guardar_certif(Certificado &certif);
 
     /*
     PRE: Recibe un certificado (Certificado &).

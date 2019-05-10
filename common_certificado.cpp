@@ -1,51 +1,13 @@
+#include "common_certificado.h"
+
+#include "common_error.h"
+#include "common_hash.h"
+#include "common_encriptador.h"
+
 #include <string>
-#include <vector>
 #include <iostream>
 #include <sstream>
 #include <iomanip>
-#include "common_spliter.h"
-#include "common_error.h"
-#include "common_hash.h"
-#include "common_tiempo.h"
-#include "common_certificado.h"
-#define VIGENCIA_CERTIFICADO 30
-
-/*
-PRE: Recibe un entero sin signo de 4 bytes.
-POST: Devuelve una representacion (std::string) 
-hexagesimal del valor recibido.
-*/
-std::string a_hexa32_string(const uint32_t &valor){
-    char buffer[11]; //+0x + 8 letras +\0
-    size_t largo = sizeof(buffer);
-    snprintf(buffer, largo, "0x%08x", valor);
-    return std::string(buffer);
-}
-
-/*
-PRE: Recibe un entero sin signo de 2 bytes.
-POST: Devuelve una representacion (std::string) 
-hexagesimal del valor recibido.
-*/
-std::string a_hexa16_string(const uint16_t &valor){
-    char buffer[7]; //+0x + 4 letras + \0
-    size_t largo = sizeof(buffer);
-    snprintf(buffer, largo, "0x%04x", valor);
-    return std::string(buffer);
-}
-
-
-/*
-PRE: Recibe un entero sin signo de 1 bytes.
-POST: Devuelve una representacion (std::string) 
-hexagesimal del valor recibido.
-*/
-std::string a_hexa8_string(const uint8_t &valor){
-    char buffer[5]; //+0x + 2 letras + \0
-    size_t largo = sizeof(buffer);
-    snprintf(buffer, largo, "0x%02x", valor);
-    return std::string(buffer);
-}
 
 /*
 PRE: Recibe :
@@ -64,6 +26,28 @@ ClaveRSA &clavesCliente) : numeroSerie(numeroSerie), sujeto(sujeto),
 asunto(asunto), inicio(fechaInicio), fin(fechaFin), 
 clavesCliente(clavesCliente) {}
 
+/*
+PRE: Recibe el nombre de un archivo que contenga una representacion 
+completa de un certificado.
+POST: Inicializa un certificado a partir de dicho archivo.
+Levanta OSError en caso de error. 
+*/
+Certificado::Certificado(std::string &nombreArchivoCertif){
+    ifstream in(nombreArchivoCertif, std::ios::in);
+    if (! in.is_open()){
+        std::string err = "Error al abrir archivo de certificado.".
+        throw OSError(__FILE__,__LINE__,err.data());
+    }
+    std::string linea;
+    uint16_t modulo;
+    uint8_t exp;
+    while (in.good()){
+        std::getline(in, linea);
+        this->_procesar_linea(linea, modulo, exp);
+    }
+    this->clavesCliente = std::move(ClaveRSA(exp, 0, modulo));
+}
+
 /*Inicializa un certificado sin informacion.*/
 Certificado::Certificado(){
     this->numeroSerie = 0;
@@ -71,8 +55,6 @@ Certificado::Certificado(){
     this->asunto = "";
     this->inicio = "";
     this->fin = "";
-    //this->exp = 0;
-    //this->mod = 0;
 }
 
 /*Destruye un certificado*/
@@ -92,15 +74,11 @@ Certificado::Certificado(Certificado &&otroCertif)
     this->asunto = otroCertif.asunto;
     this->inicio = otroCertif.inicio;
     this->fin = otroCertif.fin;
-    //this->exp = otroCertif.exp;
-    //this->mod = otroCertif.mod;
     otroCertif.numeroSerie = 0;
     otroCertif.sujeto = "";
     otroCertif.asunto = "";
     otroCertif.inicio = "";
     otroCertif.fin = "";
-    //otroCertif.exp = 0;
-    //otroCertif.mod = 0; 
 }
 
 /*
@@ -122,112 +100,32 @@ Certificado& Certificado::operator=(Certificado &&otroCertif){
     this->inicio = otroCertif.inicio;
     this->fin = otroCertif.fin;
     this->clavesCliente = std::move(otroCertif.clavesCliente);
-    //this->exp = otroCertif.exp;
-    //this->mod = otroCertif.mod;
     otroCertif.numeroSerie = 0;
     otroCertif.sujeto = "";
     otroCertif.asunto = "";
     otroCertif.inicio = "";
     otroCertif.fin = "";
-    //otroCertif.exp = 0;
-    //otroCertif.mod = 0; 
     return *this;
 }
 
-/*
-PRE: Recibe otro certificado (const Certificado &).
-POST: Crea un nuevo certificado por copia.
-*/
-/*
-Certificado::Certificado(const Certificado &otroCertif){
-    this->numeroSerie = otroCertif.numeroSerie;
-    this->sujeto = otroCertif.sujeto;
-    this->asunto = otroCertif.asunto;
-    this->inicio = otroCertif.inicio;
-    this->fin = otroCertif.fin;
-    this->exp = otroCertif.exp;
-    this->mod = otroCertif.mod;
-}
-*/
-/*
-PRE: Recibe otro certificado (const Certificado &).
-POST: Asigna por copia los atributos del certificado 
-recibido al actual.
-Devuelve una referencia al actual certificado 
-(Certificado &).
-*/
-/*
-Certificado& Certificado::operator=(const Certificado &otroCertif){
-    if (this == &otroCertif){
-        return *this;
-    }
-    this->numeroSerie = otroCertif.numeroSerie;
-    this->sujeto = otroCertif.sujeto;
-    this->asunto = otroCertif.asunto;
-    this->inicio = otroCertif.inicio;
-    this->fin = otroCertif.fin;
-    this->exp = otroCertif.exp;
-    this->mod = otroCertif.mod;
-    return *this;
-}
-*/
-/*
-PRE: Recibe un numero serie (uint32_t).
-POST Setea en el certificaod el numero de serie recibido.
-*/
-void Certificado::setNumeroSerie(uint32_t valor){
-    this->numeroSerie = valor;
-}
-
-/*
-PRE: Recibe un asunto (std::string &).
-POST: Setea en el certificado el asunto recibido.
-*/
-void Certificado::setAsunto(std::string &asunto){
-    this->asunto = asunto;
-}
-
-/*
-PRE: Recibe las claves publicas del cliente (ClaveRSA &).
-POST: Actualiza la claves publicas del certificado 
-*/
-/*
-void Certificado::setClave(ClaveRSA &clave){
-    this->exp = clave.getExpPublico();
-    this->mod = clave.getModulo();
-}
-*/
-/*Devuelve el sujeto (std::string) del certificado*/
-std::string Certificado::getSujeto(){
-    std::string sujeto = this->sujeto;
-    return std::move(sujeto);
-}
-
-/*Devuelve la clave publica del certificado*/
-/*
-ClaveRSA Certificado::getClave(){
-    ClaveRSA clave(this->exp, 0, this->mod);
-    return std::move(clave);
-}
-*/
 /*Devuelve una representacion (std::string) del certificado actual.*/
 std::string Certificado::a_string() const{
-    std::string certificado = "certificate:\n";
-    certificado += "\tserial number: " + std::to_string(this->numeroSerie); 
-    certificado += " (" + a_hexa32_string(this->numeroSerie) + ")" + "\n"; 
-    certificado += "\tsubject: " + this->sujeto + "\n";
-    certificado += "\tissuer: " + this->asunto + "\n";
-    certificado += "\tvalidity:\n";
-    certificado += "\t\tnot before: " + this->inicio + "\n";
-    certificado += "\t\tnot after: " + this->fin + "\n";
-    certificado += "\tsubject public key info:\n";
-    //certificado += "\t\tmodulus: " + std::to_string(this->mod);
-    certificado += "\t\tmodulus: " + this->clavesCliente.representar_modulo() + "\n";
-    //certificado += " (" + a_hexa16_string(this->mod) + ")" + "\n"; 
-    //certificado += "\t\texponent: " + std::to_string(this->exp);
-    certificado += "\t\texponent: " + this->clavesCliente.representar_exp_publico(); 
-    //certificado += " (" + a_hexa8_string(this->exp) + ")"; 
-    return std::move(certificado);
+    std::stringstream representacion;
+    representacion << "certificate:\n";
+    representacion << "\tserial number: " << std::dec << this->numeroSerie;
+    representacion << " " << "(" << std::hex << setfill('0') << std::setw(8);
+    representacion << this->numeroSerie << ")" << "\n";
+    representacion << "\tsubject: " << this->sujeto << "\n";
+    representacion << "\tissuer: " << this->asunto << "\n";
+    representacion << "\tvalidity:\n";
+    representacion << "\t\tnot before: " << this->inicio << "\n"; 
+    representacion << "\t\tnot after: " << this->fin << "\n";
+    representacion << "\tsubject public key info:\n";
+    representacion << "\t\tmodulus: ";
+    representacion << this->clavesCliente.representar_modulo() << "\n";
+    representacion << "\t\texponent: ";
+    representacion << this->clavesCliente.representar_exp_publico();
+    return std::move(representacion.str());
 }
 
 /*Devuelve el hash (uint32_t) de certificado actual*/
@@ -262,10 +160,6 @@ void Certificado::recibir(Protocolo &proto){
         this->inicio = proto.recibir_mensaje();
         this->fin = proto.recibir_mensaje();
         this->clavesCliente.recibir_publico(proto);
-        /*
-        this->mod = proto.recibir_dos_bytes();
-        this->exp = proto.recibir_un_byte();
-        */
     } catch (OSError &error){
         std::string err = "Error al recibir certificado.";
         throw OSError(__FILE__,__LINE__,err.data());
@@ -287,83 +181,10 @@ void Certificado::enviar(Protocolo &proto){
         proto.enviar_mensaje(this->inicio);
         proto.enviar_mensaje(this->fin);
         this->clavesCliente.enviar_publico(proto);
-        /*
-        proto.enviar_bytes(this->mod, 2);
-        proto.enviar_bytes(this->exp, 1);
-        */
     } catch (OSError &error){
         std::string err = "Error al enviar certificado.";
         throw OSError(__FILE__,__LINE__,err.data());
     }
-}
-
-/*
-PRE: Recibe un protocolo (Protocolo &) creado 
-para recibir informacion de un cliente que 
-desee crear un certificado.
-POST: Recibe los parametros para crear el certificado
-en el orden que los envia el metodo enviar_parametros.
-Levanta OSError en caso de error.
-*/
-/*
-void Certificado::recibir_parametros(Protocolo &proto){
-    try {
-        this->sujeto = proto.recibir_mensaje();
-        this->mod = proto.recibir_dos_bytes();
-        this->exp = proto.recibir_un_byte();
-        this->inicio = proto.recibir_mensaje();
-        this->fin = proto.recibir_mensaje();
-    } catch (OSError &error){
-        std::string err = "Error al recibir parametros de creacion.";
-        throw OSError(__FILE__,__LINE__,err.data());
-    }
-}
-*/
-/*
-PRE: Recibe un protocolo (Protocolo &) creado 
-para enviar informacion a una autoridad certificante.
-POST: Envia los parametros que la autoridad necesita
-del certificado actual para certificarlo, en el orden
-que la autoridad certificante los espera.
-Levanta OSError en caso de error. 
-*/
-/*
-void Certificado::enviar_parametros(Protocolo &proto){
-    try {
-        proto.enviar_mensaje(this->sujeto);
-        proto.enviar_bytes(this->mod, 2);
-        proto.enviar_bytes(this->exp, 1);
-        proto.enviar_mensaje(this->inicio);
-        proto.enviar_mensaje(this->fin);
-    } catch (OSError &e){
-        std::string err = "Erroa al enviar parametros del certificado.";
-        throw OSError(err.data());
-    }
-}
-*/
-/*
-PRE: Recibe un flujo de entrada que contenga informacion del 
-certificado a crear : subject, fecha de inicio, fecha de finalizacion.
-POST: Carga en el certificado actual los datos anteriores.
-*/
-void Certificado::cargar_info(std::istream &in){
-    std::string linea;
-    std::getline(in, linea);
-    this->sujeto = std::move(linea);
-    std::getline(in, linea);
-    if (! in.good()){
-        //No hay fecha de inicio, ni final
-        Tiempo tiempo;
-        this->inicio = tiempo.representar();
-        tiempo.sumar_dias(VIGENCIA_CERTIFICADO);
-        this->fin = tiempo.representar();
-        return;
-    }
-    //Suponemos que abra tanto inicio como final
-    this->inicio = std::move(linea);
-    std::getline(in, linea);
-    this->fin = std::move(linea);
-    return;
 }
 
 /*
@@ -383,6 +204,20 @@ void Certificado::_procesar_linea(std::string &linea, uint16_t &mod, uint8_t &ex
     while ((pos = lineaSinTabs.find('\t')) != std::string::npos) {
         lineaSinTabs = lineaSinTabs.substr(pos+1);
     }
+    //
+
+    std::stringstream lineaStream;
+    lineaStream.str(lineaSinTabs);
+    std::string campo;
+    std::string separador = ": ";
+    std::getline(lineaStream, campo, separador);
+    if (! lineaStream.good()){
+        return;
+    }
+    std::string valor = lineaStream.str();
+
+    //
+    /*
     Spliter spliter;
     std::vector<std::string> lineaSplit;
     std::string separador = ": ";
@@ -392,6 +227,7 @@ void Certificado::_procesar_linea(std::string &linea, uint16_t &mod, uint8_t &ex
     }
     std::string campo = lineaSplit[0];
     std::string valor = lineaSplit[1];
+    */
     if (campo == "serial number"){
         this->numeroSerie = (uint32_t) atoi(valor.data());
         return;
@@ -412,20 +248,30 @@ void Certificado::_procesar_linea(std::string &linea, uint16_t &mod, uint8_t &ex
         this->fin = valor;
         return;
     }
+    std::stringstream lineaValorStream;
+    lineaValorStream.str(valor);
+    separador = " ";
     if (campo == "modulus"){
+        /*
         std::vector<std::string> modulo;
         separador = " ";
         modulo = spliter.split(valor, separador);
-        //this->mod = (uint16_t) atoi(modulo[0].data());
-        mod = (uint16_t) atoi(modulo[0].data());
+        */
+        //
+        std::string modulo;
+        std::getline(lineaValorStream, modulo, separador);
+        mod = (uint16_t) atoi(modulo.data());
         return;
     }
     if (campo == "exponent"){
+        /*
         std::vector<std::string> exponente;
         separador = " ";
         exponente = spliter.split(valor, separador);
-        //this->exp = (uint8_t) atoi(exponente[0].data());
-        exp = (uint8_t) atoi(exponente[0].data());
+        */
+        std::string exponente;
+        std::getline(lineaValorStream, exponente, separador);
+        exp = (uint8_t) atoi(exponente.data());
         return;
     }
     //Cualquier otra cosa la ignoramos
@@ -434,42 +280,51 @@ void Certificado::_procesar_linea(std::string &linea, uint16_t &mod, uint8_t &ex
 } 
 
 /*
-PRE: Recibe un flujo de entrada (istream &) que contenga
-un certificado ya creado.
-POST: Carga el certificado actual con la informacion del 
-flujo.
+Guardar una representacion del certificado en un archivo de nombre 
+"<sujeto del certificado>.cert"
+Levanta OSError en caso de error.
 */
-void Certificado::cargar(std::istream &in){
-    std::string linea;
-    uint16_t modulo;
-    uint8_t exp;
-
-    while (in.good()){
-        std::getline(in, linea);
-        this->_procesar_linea(linea, modulo, exp);
+void Certificado::guardar() const {
+    std::string nombreArchivoCertif = this->sujeto + ".cert";
+    ofstream out(nombreArchivoCertif, std::ios::out);
+    if (! out.is_open()){
+        std::string err = "Error al abrir archivo donde guardar certificado.";
+        throw OSError(__FILE__,__LINE__,err.data());
     }
-
-    this->clavesCliente = std::move(ClaveRSA(exp, 0, modulo));
+    out << this->a_string();   
 }
 
 /*
-PRE: Recibe un flujo de salida (ostream &).
-POST: Escribe en flujo de salida, una representacion del 
-certificado.
+PRE: Recibe un mapa bloqueante (MapaBloq &) de sujetos asociados a 
+claves RSA; y una referencia a una claveRSA.
+POST: Devuelve true si existe un el sujeto del certificado en el mapa, 
+en cuyo caso copia, en la referencia recibida, la clave asociada; o false
+si no existe en el mapa.
 */
-void Certificado::guardar(std::ostream &out) const { 
-    out << this->a_string();
+bool Certificado::obtener_sujeto_mapa(MapaBloq &sujetosClaves, ClaveRSA &copia){
+    return sujetosClaves.obtener_si_esta(this->sujeto, copia);
+}
+
+/*
+PRE: Recibe un mapa bloqueante (MapaBloq &) de sujetos asociados a 
+claves RSA.
+POST: Borra al sujeto del certificado del mapa bloqueante.
+*/
+bool Certificado::borrar_sujeto_mapa(MapaBloq &sujetosClaves){
+    sujetosClaves.borrar(this->sujeto);
 }
 
 /*Sobrecarga del operador >> de istream para clase Certificado*/
-std::istream& operator>>(std::istream &in, Certificado &certif){
+/*std::istream& operator>>(std::istream &in, Certificado &certif){
     certif.cargar(in);
     return in;
 }
+*/
 
 /*Sobrecarga del operador << de ostream para clase Certificado*/
-std::ostream& operator<<(std::ostream &out, const Certificado &certif){
+/*std::ostream& operator<<(std::ostream &out, const Certificado &certif){
     certif.guardar(out);
     return out;
 }
+*/
 

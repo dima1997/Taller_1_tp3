@@ -1,16 +1,17 @@
 #ifndef CLAVES_H
 #define CLAVES_H
-#include <cstdint>
-#include <string>
-#include "common_archivable.h"
+
 #include "common_protocolo.h"
 
-struct ClaveRSA : public Archivable{
-    public:
+#include <cstdint>
+#include <string>
+
+struct ClaveRSA {
+private:
     uint8_t expPublico;
     uint8_t expPrivado;
     uint16_t modulo;
-
+public:
     //Constructor por default
 
     /*Crea una clave por default, con todos sus atributos nulos.*/
@@ -28,21 +29,33 @@ struct ClaveRSA : public Archivable{
     */
     ClaveRSA(uint8_t expPublico, uint8_t expPrivado, uint16_t modulo);
 
+    /*
+    PRE: Recibe el nombre de un archivo que contenga claves de la forma:
+    <exponente publico> <exponente privado> <modulo>
+    o
+    <exponente publico> <modulo>
+    POST: Inicializa una clave RSA a partir de la informacion del archivo.
+    */
+    ClaveRSA(std::string &nombreArchivoClaves);
+
     //Destructor
 
     /*Destruye la clave rsa*/
     ~ClaveRSA();
 
-    //Constructor, operador =  por copia
+    //No permite copias implicitas
 
-    ClaveRSA(const ClaveRSA &otraClave);
+    ClaveRSA(const ClaveRSA &otraClave) = delete;
+
+    ClaveRSA& operator=(const ClaveRSA &otraClave) = delete;
+
     /*
+    Copia explicita.
     PRE: Recibe una referencia a otra clave (ClaveRSA &).
     POST: Copia todos los atributos de clave recibida, a 
     la clave actual.
-    Devuelve un referencia a la clave actual
     */
-    ClaveRSA& operator=(const ClaveRSA &otraClave);
+    void copiarDesde(const ClaveRSA &otraClave);
 
     //Constructor, operador =  por moviemiento semantico
 
@@ -103,35 +116,6 @@ struct ClaveRSA : public Archivable{
     uint32_t encriptar_privado(uint32_t valor);
 
     /*
-    PRE: Recibe un flujo de entrada (std::istream &) 
-    que contiene las claves publicas y/o privadas de una entidad, 
-    de la forma:
-    <exponente-publico> <exponente-privado> <modulo>
-    o
-    <exponente-publico> <modulo>
-    POST: Actualiza los valores de la claves rsa, con los 
-    encontrados en el archivo.
-    */
-    void cargar(std::istream &in);
-
-    /*
-    PRE: Recibe un flujo de salida (std::ostream &).
-    POST: Escribe la representacion completa de la clave
-    en el flujo:
-    <exponente publico> <exponente privado> <modulo>
-    */
-    void guardar(std::ostream &out) const;
-
-    /*
-    Devuelve el exponente publico (uint8_t) de 
-    la clave
-    */
-    uint8_t getExpPublico();
-
-    /*Devuelve el modulo (uint16_t) de la clave*/
-    uint16_t getModulo();
-
-    /*
     PRE: Recibe un protocolo de comunicacion (Protocolo &).
     POST: Envia a traves del protocolo :
         1°) Su modulo, como entero sin signo de 2 bytes
@@ -161,12 +145,6 @@ struct ClaveRSA : public Archivable{
     */
     std::string representar_exp_publico() const;
 };
-
-/*Sobrecarga del operador >> para ClaveRSA*/
-std::istream& operator>>(std::istream &in, ClaveRSA &clave);
-
-/*Sobrecarga del operador << para ClaveRSA*/
-std::ostream& operator<<(std::ostream &out, ClaveRSA &clave);
 
 #endif // CLAVES_H
 

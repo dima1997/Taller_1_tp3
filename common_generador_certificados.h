@@ -3,7 +3,8 @@
 
 #include "common_claves.h"
 #include "common_protocolo.h"
-#include "common_hilos_aux.h"
+#include "common_mapa_bloq.h"
+#include "common_contador_bloq.h"
 
 class GeneradorCertificados {
 private:
@@ -39,6 +40,12 @@ public:
     
     /*Destruye un generador de certificados.*/
     ~GeneradorCertificados();
+
+    // No permite copías implicitas
+
+    GeneradorCertificados(const GeneradorCertificados &otroGenerador) = delete;
+    GeneradorCertificados& operator=(const GeneradorCertificados &otroGenerador) = delete;
+
 
     /*
     PRE: Recibe una doble referencia a otro generador de 
@@ -83,7 +90,7 @@ public:
     POST: Devuelve true si agrego un nuevo (que no existia antes) sujeto y clave 
     al mapa; false en caso contrario (y no se agrego nada). 
     */
-    bool agregarSujetoClave(MapaBloq &sujetosClaves);
+    bool agregar_sujeto_clave_mapa(MapaBloq &sujetosClaves);
 
     /*
     PRE: Recibe un contador (ContadorBloq &) de numeros de serie, 
@@ -96,7 +103,7 @@ public:
     PRE: Recibe un mapa bloqueante de sujetos y claves.
     POST: Elimina del mapa al sujeto del ceritificado si es que esta.
     */
-    void borrarSujeto(MapaBloq &sujetosClaves);
+    void borrar_sujeto_mapa(MapaBloq &sujetosClaves);
 };
 
 #endif //GENERADOR_CERTIFICADO_H

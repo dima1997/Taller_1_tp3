@@ -1,44 +1,36 @@
 #ifndef CERTIFICADO_H
 #define CERTIFICADO_H
-#include <string>
-#include <vector>
-#include <fstream>
+
 #include "common_protocolo.h"
 #include "common_claves.h"
-#include "common_archivable.h"
+#include "common_mapa_bloq.h"}
 
-/*
-PRE: Recibe un entero sin signo de 4 bytes.
-POST: Devuelve una representacion (std::string) 
-hexagesimal del valor recibido.
-*/
-std::string a_hexa32_string(const uint32_t &valor);
+#include <string>
+#include <fstream>
 
-/*
-PRE: Recibe un entero sin signo de 2 bytes.
-POST: Devuelve una representacion (std::string) 
-hexagesimal del valor recibido.
-*/
-std::string a_hexa16_string(const uint16_t &valor);
 
-/*
-PRE: Recibe un entero sin signo de 1 bytes.
-POST: Devuelve una representacion (std::string) 
-hexagesimal del valor recibido.
-*/
-std::string a_hexa8_string(const uint8_t &valor);
-
-class Certificado : public Archivable {
-    public:
+class Certificado {
+private:
     uint32_t numeroSerie;
     std::string sujeto;
     std::string asunto;
     std::string inicio;
     std::string fin;
-    //uint16_t mod;
-    //uint8_t exp;
     ClaveRSA clavesCliente;
-
+    
+    /*
+    PRE: Recibe una referencia a una linea (std::string &)
+    de un archivo que contiene un certificado, una referencia
+    a un moduolo (uint16_t &) y una referencia a un exponente 
+    (uin8_t &).
+    POST: Procesa la linea guardando informacion de ella
+    segun corresponda, para modelizar el certificado del
+    archivo en la clase actual.
+    Las lineas que correspondan al modulo y exponenete las procesa
+    y guarda su valor en las referencias recibidas.
+    */
+    void _procesar_linea(std::string &linea, uint16_t &mod, uint8_t &exp);
+public:
     /*
     PRE: Recibe :
     numero de serie (uint32_t)
@@ -53,17 +45,16 @@ class Certificado : public Archivable {
     Certificado(uint32_t numeroSerie, std::string &sujeto, std::string &asunto, 
     std::string &fechaInicio, std::string &fechaFin, ClaveRSA &clavesCliente);
 
+    /*
+    PRE: Recibe el nombre de un archivo que contenga una representacion 
+    completa de un certificado.
+    POST: Inicializa un certificado a partir de dicho archivo.
+    Levanta OSError en caso de error. 
+    */
+    Certificado::Certificado(std::string &nombreArchivoCertif);
+
     /*Crea un certificado con todos sus atributos nulos*/
     Certificado();
-
-    /*
-    PRE: Recibe las claves publicas del cliente (ClaveRSA &, con los 
-    expPublico y modulo correctos), y un vector de strings con informacion
-    de el sujeto del certificado, la fecha de inicio, y de final 
-    (en ese orden).
-    POST: Inicializa un certificado con dicha informacion. 
-    */
-    Certificado(ClaveRSA &clvClnt, std::vector<std::string> &info);
 
     /*Destruye un certificado*/
     ~Certificado();
@@ -105,30 +96,6 @@ class Certificado : public Archivable {
     */
     Certificado& operator=(const Certificado &otroCertif) = delete;
 
-    /*
-    PRE: Recibe un numero serie (uint32_t).
-    POST Setea en el certificaod el numero de serie recibido.
-    */
-    void setNumeroSerie(uint32_t valor);
-
-    /*
-    PRE: Recibe un asunto (std::string &).
-    POST: Setea en el certificado el asunto recibido.
-    */
-    void setAsunto(std::string &asunto);
-
-    /*
-    PRE: Recibe las claves publicas del cliente (ClaveRSA &).
-    POST: Actualiza la claves publicas del certificado 
-    */
-    //void setClave(ClaveRSA &clave);
-
-    /*Devuelve el sujeto (std::string) del certificado*/
-    std::string getSujeto();
-
-    /*Devuelve la clave publica del certificado*/
-    //ClaveRSA getClave();
-
     /*Devuelve una representacion (std::string) del certificado actual.*/
     std::string a_string() const;
     
@@ -161,66 +128,35 @@ class Certificado : public Archivable {
     */
     void enviar(Protocolo &proto);
 
+
     /*
-    PRE: Recibe un protocolo (Protocolo &) creado 
-    para recibir informacion de un cliente que 
-    desee crear un certificado.
-    POST: Recibe los parametros para crear el certificado
-    en el orden que los envia el metodo enviar_parametros.
+    Guardar una representacion del certificado en un archivo de nombre 
+    "<sujeto del certificado>.cert"
     Levanta OSError en caso de error.
     */
-    void recibir_parametros(Protocolo &proto);
+    void guardar() const;
 
     /*
-    PRE: Recibe un protocolo (Protocolo &) creado 
-    para enviar informacion una autoridad certificante.
-    POST: Envia los parametros que la autoridad necesita
-    del certificado actual para certificarlo, en el orden
-    que la autoridad certificante los espera.
-    Levanta OSError en caso de error. 
+    PRE: Recibe un mapa bloqueante (MapaBloq &) de sujetos asociados a 
+    claves RSA; y una referencia a una claveRSA.
+    POST: Devuelve true si existe un el sujeto del certificado en el mapa, 
+    en cuyo caso copia, en la referencia recibida, la clave asociada; o false
+    si no existe en el mapa.
     */
-    void enviar_parametros(Protocolo &proto);
+    bool obtener_sujeto_mapa(MapaBloq &sujetosClaves, ClaveRSA &copia);
 
     /*
-    PRE: Recibe una referencia a una linea (std::string &)
-    de un archivo que contiene un certificado, una referencia
-    a un moduolo (uint16_t &) y una referencia a un exponente 
-    (uin8_t &).
-    POST: Procesa la linea guardando informacion de ella
-    segun corresponda, para modelizar el certificado del
-    archivo en la clase actual.
-    Las lineas que correspondan al modulo y exponenete las procesa
-    y guarda su valor en las referencias recibidas.
+    PRE: Recibe un mapa bloqueante (MapaBloq &) de sujetos asociados a 
+    claves RSA.
+    POST: Borra al sujeto del certificado del mapa bloqueante.
     */
-    void _procesar_linea(std::string &linea, uint16_t &mod, uint8_t &exp);
-
-    /*
-    PRE: Recibe un flujo de entrada que contenga informacion del 
-    certificado a crear : subject, fecha de inicio, fecha de finalizacion.
-    POST: Carga en el certificado actual los datos anteriores.
-    */
-    void cargar_info(std::istream &in);
-
-    /*
-    PRE: Recibe un flujo de entrada (istream &) que contenga
-    un certificado ya creado.
-    POST: Carga el certificado actual con la informacion del 
-    flujo.
-    */
-    void cargar(std::istream &in);
-
-    /*
-    PRE: Recibe un flujo de salida (ostream &).
-    POST: Escribe en flujo de salida, una representacion del 
-    certificado.
-    */
-    void guardar(std::ostream &out) const;
+    bool borrar_sujeto_mapa(MapaBloq &sujetosClaves);
 };
 
 /*Sobrecarga del operador >> de istream para clase Certificado*/
-std::istream& operator>>(std::istream &in, Certificado &certif);
+//std::istream& operator>>(std::istream &in, Certificado &certif);
 
 /*Sobrecarga del operador << de ostream para clase Certificado*/
-std::ostream& operator<<(std::ostream &out, const Certificado &certif);
+//std::ostream& operator<<(std::ostream &out, const Certificado &certif);
 
 #endif // CERTIFICADO_H
