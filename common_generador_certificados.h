@@ -7,14 +7,16 @@
 #include "common_mapa_bloq.h"
 #include "common_contador_bloq.h"
 
+#include <string>
+
 class GeneradorCertificados {
 private:
     std::string sujeto;
     std::string fechaInicio;
     std::string fechaFin;
     ClaveRSA clavesCliente;
-public:
 
+public:
     /*
     Crea un generador de certificados por defecto, 
     con sujeto, fecha de inicio y de fin nulos
@@ -37,7 +39,8 @@ public:
     certificado se tomara la fecha actual como inicio, la 30
     dias despues la de finalizacion. 
     */
-    GeneradorCertificados(const char *nombreArchivoInfo, ClaveRSA &clavesCliente);
+    GeneradorCertificados(std::string &nombreArchivoInfo, 
+    ClaveRSA &clavesCliente);
     
     /*Destruye un generador de certificados.*/
     ~GeneradorCertificados();
@@ -45,7 +48,8 @@ public:
     // No permite copías implicitas
 
     GeneradorCertificados(const GeneradorCertificados &otroGenerador) = delete;
-    GeneradorCertificados& operator=(const GeneradorCertificados &otroGenerador) = delete;
+    GeneradorCertificados& operator=(const GeneradorCertificados 
+    &otroGenerador) = delete;
 
 
     /*
@@ -87,9 +91,11 @@ public:
     void recibir_parametros(Protocolo &proto);
 
     /*
-    PRE: Recibe un mapa bloqueante (MapaBloq &) de sujetos asociados claves RSA.
-    POST: Devuelve true si agrego un nuevo (que no existia antes) sujeto y clave 
-    al mapa; false en caso contrario (y no se agrego nada). 
+    PRE: Recibe un mapa bloqueante (MapaBloq &) de sujetos asociados 
+    claves RSA.
+    POST: Devuelve true si agrego un nuevo (que no existia antes) 
+    sujeto y clave al mapa; false en caso contrario (y no se agrego 
+    nada). 
     */
     bool agregar_sujeto_clave_mapa(MapaBloq &sujetosClaves);
 

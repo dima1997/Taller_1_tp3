@@ -18,8 +18,8 @@ puerto al que se conectara.
 POST: Inicializa un cliente que pide crear y revocar
 certificados.
 */
-Cliente::Cliente(const char *host, const char *puerto) 
-: skt(host, puerto){}
+Cliente::Cliente(std::string &host, std::string &puerto) 
+: skt(host.data(), puerto.data()){}
 
 /*Destruye al cliente.*/
 Cliente::~Cliente(){}
@@ -46,7 +46,7 @@ POST: Desencripta la huella recibida e imprime en el proceso:
 Devuelve la huella desencritada.
 */
 uint32_t Cliente::desencrip_imprimir_huella_svr(uint32_t huellaSvr,
-ClaveRSA &clvClnt, ClaveRSA clvSvr){
+ClaveRSA &clvClnt, ClaveRSA &clvSvr){
     std::cout << "Huella del servidor: ";
     std::cout << std::to_string(huellaSvr) << "\n";
     uint32_t hashSvr = clvClnt.encriptar_privado(huellaSvr);
@@ -82,12 +82,11 @@ de la claves publicas del servidor.
 POST: Ejecuta el procedimiento para crear un certificado.
 Levanta OSError en caso de error.
 */
-void Cliente::crear_certif(const char *nombreInfoCertif, 
-const char *nombreClavesClnt, const char *nombreClavesSvr){
+void Cliente::crear_certif(std::string &nombreInfoCertif, 
+std::string &nombreClavesClnt, std::string &nombreClavesSvr){
     try {
         ClaveRSA clavesClnt(nombreClavesClnt);
-        GeneradorCertificados genCertif(nombreInfoCertif, 
-            std::move(clavesClnt.copiar()));
+        GeneradorCertificados genCertif(nombreInfoCertif, clavesClnt);
         ClaveRSA clavesSvr(nombreClavesSvr);
         Protocolo proto(this->skt);
         proto.enviar_bytes(0,1);
@@ -125,8 +124,8 @@ del servidor.
 POST: Ejecuta el procedimiento para revocar un certificado.
 Levanta OSError en caso de error.
 */
-void Cliente::revocar_certif(const char *nombreCertif, 
-const char *nombreClavesClnt, const char *nombreClavesSvr){
+void Cliente::revocar_certif(std::string &nombreCertif, 
+std::string &nombreClavesClnt, std::string &nombreClavesSvr){
     try {
         Certificado certif(nombreCertif);
         ClaveRSA clavesClnt(nombreClavesClnt);
@@ -162,14 +161,14 @@ int main(int argc, const char* argv[]){
             std::string err = "Error: argumentos invalidos.";
             throw ClienteError(err.data());
         }
-        const char *host = argv[1];
-        const char *puerto = argv[2];
+        std::string host = argv[1];
+        std::string puerto = argv[2];
         Cliente cliente(host, puerto);
         
         std::string comando = argv[3];
-        const char *nombreCertif = argv[4];
-        const char *nombreClvClnt = argv[5];
-        const char *nombreClvSvr = argv[6];
+        std::string nombreCertif = argv[4];
+        std::string nombreClvClnt = argv[5];
+        std::string nombreClvSvr = argv[6];
 
         if (comando == "new"){
             cliente.crear_certif(nombreCertif, nombreClvClnt, nombreClvSvr);
@@ -179,7 +178,7 @@ int main(int argc, const char* argv[]){
             std::string err = "Error: argumentos invalidos.";
             throw ClienteError(err.data());
         }
-    } catch (CienteError &error){
+    } catch (ClienteError &error){
         std::cout << error.what() << "\n";
         return 0;
     } catch (OSError &error){

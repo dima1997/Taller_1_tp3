@@ -4,10 +4,10 @@
 #define BUF_LEN 256
 
 class OSError : public std::exception{
-    private:
+private:
     char msg_error[BUF_LEN];
     
-    public:
+public:
     /*Crea un OSError*/
     explicit OSError(const char* fmt, ...) noexcept;
     

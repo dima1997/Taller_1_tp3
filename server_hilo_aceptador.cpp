@@ -49,39 +49,20 @@ void HAceptador::run(){
         hiloCertfcdor = new HCertificador(sktActivo, contador, mapa, claveSvr);
         hiloCertfcdor->start();
         hilos.push_back(hiloCertfcdor);
-        /*
-        std::vector<Thread*> temp; //aux para iterar
-        for (size_t i = 0; i < hilos.size(); ++i){
-            if (hilos[i]->is_dead()){
-                hilos[i]->join();
-                delete hilos[i];
-            } else {
-                temp.push_back(hilos[i]);
-            }
-        }
-        hilos = std::move(temp);
-        */
         for (auto it = hilos.begin(); it != hilos.end(); ) {
-            if (*it->is_dead()) {
-                *it->join();
-                delete *it;
+            if ((*it)->is_dead()) {
+                (*it)->join();
+                delete (*it);
                 it = hilos.erase(it);
             } else {
                 ++it;
             }
         }
-
         //Ahora solo quedan los hilos que siguen vivos
     }
-    /*
-    for (size_t i = 0; i < hilos.size(); ++i){
-        hilos[i]->join();
-        delete hilos[i];
-    }
-    */
     for (auto it = hilos.begin(); it != hilos.end(); ) {
-        *it->join();
-        delete *it;
+        (*it)->join();
+        delete (*it);
         it = hilos.erase(it);
     }
     this->estaMuerto = true;

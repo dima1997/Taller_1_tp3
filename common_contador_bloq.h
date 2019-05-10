@@ -20,7 +20,7 @@ class ContadorBloq {
     Si el puntero del flujo esta en el final del mismo, entonces el 
     contador se iniciara en 1, por defecto
     */
-    ContadorBloq(std::istream &in);
+    explicit ContadorBloq(std::istream &in);
 
     /*Destruye un contador bloqueante.*/
     ~ContadorBloq();
@@ -37,7 +37,6 @@ class ContadorBloq {
     con valor del contador actual.
     */
     void guardar(std::ostream &out) const;
-
 };
 
 /*Sobrecarga del operador << de ostream para clase ContadorBloq*/

@@ -52,7 +52,7 @@ void HCertificador::crear(Protocolo &proto){
     try {
         GeneradorCertificados genCertif;
         genCertif.recibir_parametros(proto);
-        if (! genCertif.agregar_sujeto_clave(this->sujetosClaves)){
+        if (! genCertif.agregar_sujeto_clave_mapa(this->sujetosClaves)){
             // Ya tiene certificado vigente
             proto.enviar_bytes(1,1);
             return;
@@ -70,7 +70,7 @@ void HCertificador::crear(Protocolo &proto){
         uint8_t seRecibioCorrectamente = proto.recibir_un_byte();
         if (seRecibioCorrectamente == 1){
             //El cliente no recibio la huella correcta
-            genCertif.borrar_sujeto(this->sujetosClaves);
+            certif.borrar_sujeto_mapa(this->sujetosClaves);
         }
     } catch (OSError &error){
         std::string err = "Error al crear certificado.";
@@ -92,7 +92,6 @@ void HCertificador::revocar(Protocolo &proto){
     try {
         certif.recibir(proto);
         uint32_t huellaCliente = proto.recibir_cuatro_bytes();
-        std::string sujeto = certif.getSujeto();
         ClaveRSA claveCliente;
         if (! certif.obtener_sujeto_mapa(this->sujetosClaves, claveCliente)){
             //El certificado no esta registrado.

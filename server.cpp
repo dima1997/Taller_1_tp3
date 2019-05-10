@@ -1,12 +1,17 @@
-#include <fstream>
-#include <iostream>
-#include <string>
+#include "server.h"
+
+#include "server_hilo_aceptador.h"
+
 #include "common_socket.h"
 #include "common_claves.h"
 #include "common_error.h"
-#include "common_hilos_aux.h"
-#include "server_hilos.h"
-#include "server.h"
+#include "common_contador_bloq.h"
+#include "common_mapa_bloq.h"
+
+#include <fstream>
+#include <iostream>
+#include <string>
+
 #define CANTIDAD_CLIENTES_ESCUCHAR 20
 
 /*Inicializa un servidor*/
@@ -16,15 +21,15 @@ Servidor::Servidor(){}
 Servidor::~Servidor(){}
 
 /*
-PRE: Recibe el nombre del archivo donde guardar el proximo
+PRE: Recibe el nombre (std::string) del archivo donde guardar el proximo
 numero de serie a utilizar e informacion sobre los certificados
 creados; el contador (ContadorBloq &) de numeros de serie, y el
-mapa de sujetos y claves de certificados creados.
+mapa (MpaBloq &) de sujetos y claves de certificados creados.
 POST: Sobreescribe el archivo la ultima version del proximo numero
 de serie y sujetos y claves de certificados aun vigentes.
 Levanta OSError en caso de error. 
 */
-void Servidor::guardar_contador_mapa(const char* nombreArchIndice, 
+void Servidor::guardar_contador_mapa(std::string &nombreArchivoIndice, 
 ContadorBloq &contador, MapaBloq &sujetosClaves){
     std::ofstream out(nombreArchivoIndice, std::ios::out);
     if (! out.is_open()){
@@ -44,20 +49,18 @@ de certificados creados.
 POST: Ejecuta un servidor que crea y revoca certificados
 Levanta OSError en caso de error.
 */
-void Servidor::ejecutar(const char* nombrePuerto, 
-const char* nombreArchivoClaves, const char* nombreArchivoIndice){
+void Servidor::ejecutar(std::string &nombrePuerto, 
+std::string &nombreArchivoClaves, std::string &nombreArchivoIndice) {
     try{
-        Socket sktPasivo(nombrePuerto);
+        Socket sktPasivo(nombrePuerto.data());
         sktPasivo.escuchar(CANTIDAD_CLIENTES_ESCUCHAR);
-        ifstream in(nombreArchivoIndice, std::ios::out);
+        std::ifstream in(nombreArchivoIndice, std::ios::out);
         if (! in.is_open()){
             std::string err = "Error al abrir archivo de indices.";
             throw OSError(__FILE__,__LINE__,err.data());
         }
         ContadorBloq contador(in);
         MapaBloq sujetosClaves(in);
-        //this->cargar_contador_mapa(nombreArchivoIndice,contador,sujetosClaves);
-        //ClaveRSA claveSvr = std::move(this->cargar_claves(claves));
         ClaveRSA claveSvr(nombreArchivoClaves);
         HAceptador hiloAceptador(sktPasivo, contador, sujetosClaves, claveSvr);
         hiloAceptador.start();
@@ -68,7 +71,8 @@ const char* nombreArchivoClaves, const char* nombreArchivoIndice){
         }
         hiloAceptador.stop();
         hiloAceptador.join();
-        this->guardar_contador_mapa(indice, contador, sujetosClaves);
+        this->guardar_contador_mapa(nombreArchivoIndice, contador,
+            sujetosClaves);
     } catch (OSError &error){
         std::string err = "Error al ejecutar servidor.";
         throw OSError(__FILE__,__LINE__, err.data());
@@ -80,9 +84,9 @@ int main(int argc, const char* argv[]) {
     if (argc != 4) {
         return 1;
     }
-    const char *puerto = argv[1];
-    const char *claves = argv[2];
-    const char *indice = argv[3];
+    std::string puerto = argv[1];
+    std::string claves = argv[2];
+    std::string indice = argv[3];
     try {
         Servidor servidor;
         servidor.ejecutar(puerto, claves, indice);

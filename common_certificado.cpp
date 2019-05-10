@@ -199,14 +199,13 @@ archivo en la clase actual.
 Las lineas que correspondan al modulo y exponenete las procesa
 y guarda su valor en las referencias recibidas.
 */
-void Certificado::_procesar_linea(std::string &linea, uint16_t &mod, uint8_t &exp){
+void Certificado::_procesar_linea(std::string &linea, uint16_t &mod, 
+uint8_t &exp){
     size_t pos = 0;
     std::string lineaSinTabs = linea; 
     while ((pos = lineaSinTabs.find('\t')) != std::string::npos) {
         lineaSinTabs = lineaSinTabs.substr(pos+1);
     }
-    //
-
     std::stringstream lineaStream;
     lineaStream.str(lineaSinTabs);
     std::string campo;
@@ -217,19 +216,6 @@ void Certificado::_procesar_linea(std::string &linea, uint16_t &mod, uint8_t &ex
     }
     std::string valor = lineaStream.str().substr(1); 
     // Para eliminar el espacio al ppio.
-
-    //
-    /*
-    Spliter spliter;
-    std::vector<std::string> lineaSplit;
-    std::string separador = ": ";
-    lineaSplit = spliter.split(lineaSinTabs, separador);
-    if (lineaSplit.size() < 2){
-        return;
-    }
-    std::string campo = lineaSplit[0];
-    std::string valor = lineaSplit[1];
-    */
     if (campo == "serial number"){
         this->numeroSerie = (uint32_t) atoi(valor.data());
         return;

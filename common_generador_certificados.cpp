@@ -10,6 +10,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <string>
 
 #define VIGENCIA_CERTIFICADO 30
 
@@ -40,8 +41,8 @@ Si no se especificado fecha de inicio y finalizacion del
 certificado se tomara la fecha actual como inicio, la 30
 dias despues la de finalizacion. 
 */
-GeneradorCertificados::GeneradorCertificados(const char *nombreArchivoInfo, 
-ClaveRSA &clavesCliente) : clavesCliente(std::move(clavesCliente)) { 
+GeneradorCertificados::GeneradorCertificados(std::string &nombreArchivoInfo, 
+ClaveRSA &clavesCliente) : clavesCliente(std::move(clavesCliente.copiar())) { 
         std::ifstream in(nombreArchivoInfo, std::ios::in);
         if (! in.is_open()){
             std::string err = "Error al abrir archivo en generador.";
@@ -75,7 +76,8 @@ POST: Construye un nuevo generador de certificados por
 movimiento semantico de los atributos del recibido.
 El generador de certificados recibidido queda en estado nulo. 
 */
-GeneradorCertificados::GeneradorCertificados(GeneradorCertificados &&otroGenerador) 
+GeneradorCertificados::GeneradorCertificados(
+GeneradorCertificados &&otroGenerador) 
 : clavesCliente(std::move(otroGenerador.clavesCliente)) {
     this->sujeto = std::move(otroGenerador.sujeto);
     this->fechaInicio = std::move(otroGenerador.fechaInicio);
@@ -83,7 +85,6 @@ GeneradorCertificados::GeneradorCertificados(GeneradorCertificados &&otroGenerad
     otroGenerador.sujeto = "";
     otroGenerador.fechaInicio = "";
     otroGenerador.fechaFin = "";
-    otroGenerador.clavesCliente = std::move(ClaveRSA()); //Tal ves no sea necesario
 }
 
 /*
@@ -107,7 +108,6 @@ GeneradorCertificados &&otroGenerador) {
     otroGenerador.sujeto = "";
     otroGenerador.fechaInicio = "";
     otroGenerador.fechaFin = "";
-    otroGenerador.clavesCliente = std::move(ClaveRSA()); //Tal ves no sea necesario
     return *this;
 }
 
@@ -156,7 +156,6 @@ al mapa; false en caso contrario (y no se agrego nada).
 */
 bool GeneradorCertificados::agregar_sujeto_clave_mapa(MapaBloq &sujetosClaves){
     return sujetosClaves.agregar_si_no_esta(this->sujeto, this->clavesCliente);
-    //pasar a snake_case en mapBloq
 }
 
 /*
@@ -164,7 +163,8 @@ PRE: Recibe un contador (ContadorBloq &) de numeros de serie,
 y un asunto (std::string &) para el certificado.
 POST: Genera  y devuelve un certificado (Certificado).
 */
-Certificado GeneradorCertificados::generar(ContadorBloq &contador, std::string &asunto) {
+Certificado GeneradorCertificados::generar(ContadorBloq &contador, 
+std::string &asunto) {
     uint32_t numeroSerie = contador.obtener_y_sumar_uno();
     Certificado certif(numeroSerie, this->sujeto, asunto, this->fechaInicio,
         this->fechaFin, this->clavesCliente);

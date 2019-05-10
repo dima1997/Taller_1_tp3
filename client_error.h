@@ -3,16 +3,16 @@
 
 #include "common_error.h"
 
-class ClientError : public OSError{
+class ClienteError : public OSError{
 public:
     /*
     PRE: Recibe un varias descripciones de error.
     POST: Inicializa un error de cliente.
     */
-    explicit ClientError(const char* fmt, ...) noexcept;
+    explicit ClienteError(const char* msgError) noexcept;
 
     /*Destruye un error de cliente*/
-    virtual ~ClientError() noexcept;
+    virtual ~ClienteError() noexcept;
 };
 
 #endif // CLIENTE_ERROR_H

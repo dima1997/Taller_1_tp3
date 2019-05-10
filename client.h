@@ -1,8 +1,14 @@
 #ifndef CLIENTE_H
 #define CLIENTE_H
 #include "common_socket.h"
+#include "common_certificado.h"
+#include "common_claves.h"
+
+#include <cstdint>
+#include <string>
+
 class Cliente {
-    public:
+public:
     Socket skt;
 
     /*
@@ -11,44 +17,11 @@ class Cliente {
     POST: Inicializa un cliente que pide crear y revocar
     certificados.
     */
-    Cliente(const char *host, const char *puerto);
+    Cliente(std::string &host, std::string &puerto);
     
     /*Destruye al cliente.*/
     ~Cliente();
 
-    /*
-    PRE: Recibe el nombre de un archivo que contiene informacion
-    para crear un certificado: sujeto, fecha de inicio, fecha de 
-    fin.
-    POST: Devuelve un certificado (Certificado) con cargado
-    con la informacion del archivo.
-    Levanta OSError en caso de error.
-    */
-    Certificado cargar_info(const char *nombreInfoCertif);
-
-    /*
-    PRE: Recibe el nombre (const char *) de un archivo, 
-    y un archivable (Archivable &).
-    POST: Carga el archivable.
-    Levanta OSError en caso de error.
-    */
-    void cargar_archivable(const char* nombre, Archivable &archivable);
-
-    /*
-    PRE: Recibe el nombre (const char *) de un archivo 
-    que contenga un certificado.
-    POST: Devuelve un certificado (Certificado)
-    */
-    Certificado cargar_certif(const char* nombreArchCertif);
-
-    /*
-    PRE: Recibe el nombre (const char *) de un archivo que 
-    contiene un clave publica o completa (publica y privada).
-    POST: Devuelve una clave (ClaveRSA) cargado con la 
-    informacion del archivo.
-    Levanta OSError en caso de error.
-    */
-    ClaveRSA cargar_claves(const char* nombreClaves); 
     /*
     PRE: Recibe un certificado (Certificado &).
     POST: Guardar el contenido del certificado en un
@@ -74,7 +47,7 @@ class Cliente {
     Devuelve la huella desencritada.
     */
     uint32_t desencrip_imprimir_huella_svr(uint32_t huellaSvr,
-    ClaveRSA &clvClnt, ClaveRSA clvSvr);
+    ClaveRSA &clvClnt, ClaveRSA &clvSvr);
 
     /*
     PRE: Recibe un hash del cliente (uint32_t), las claves
@@ -88,15 +61,15 @@ class Cliente {
     ClaveRSA &clvClnt, ClaveRSA &clvSvr);
 
     /*
-    PRE: Recibe el nombre (const char *) del archivo donde esta 
+    PRE: Recibe el nombre (std::string &) del archivo donde esta 
     la informacion con la cual solicitar la creacion de un 
     certificado, del archivo con las claves del cliente, y el
     de la claves publicas del servidor.
     POST: Ejecuta el procedimiento para crear un certificado.
     Levanta OSError en caso de error.
     */
-    void crear_certif(const char *nombreInfoCertif, 
-    const char *nombreClavesClnt, const char *nombreClavesSvr);
+    void crear_certif(std::string &nombreInfoCertif, 
+    std::string &nombreClavesClnt, std::string &nombreClavesSvr);
 
     
     /*
@@ -107,8 +80,8 @@ class Cliente {
     POST: Ejecuta el procedimiento para revocar un certificado.
     Levanta OSError en caso de error.
     */
-    void revocar_certif(const char *nombreCertif, 
-    const char *nombreClavesClnt, const char *nombreClavesSvr);
+    void revocar_certif(std::string &nombreCertif, 
+    std::string &nombreClavesClnt, std::string &nombreClavesSvr);
 };
 
 #endif // CLIENTE_H

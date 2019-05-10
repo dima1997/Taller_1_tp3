@@ -8,7 +8,6 @@
 #include <string>
 #include <fstream>
 
-
 class Certificado {
 private:
     uint32_t numeroSerie;
@@ -30,6 +29,7 @@ private:
     y guarda su valor en las referencias recibidas.
     */
     void _procesar_linea(std::string &linea, uint16_t &mod, uint8_t &exp);
+
 public:
     /*
     PRE: Recibe :
@@ -51,7 +51,7 @@ public:
     POST: Inicializa un certificado a partir de dicho archivo.
     Levanta OSError en caso de error. 
     */
-    Certificado(std::string &nombreArchivoCertif);
+    explicit Certificado(std::string &nombreArchivoCertif);
 
     /*Crea un certificado con todos sus atributos nulos*/
     Certificado();

@@ -6,7 +6,7 @@
 #include "common_protocolo.h"
 #include "common_contador_bloq.h"
 #include "common_mapa_bloq.h"
-#include "commnon_claves.h"
+#include "common_claves.h"
 
 class HAceptador : public Thread {
     public:

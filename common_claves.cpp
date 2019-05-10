@@ -5,8 +5,11 @@
 #include "common_protocolo.h"
 #include "common_error.h"
 
+#include "client_error.h"
+
 #include <string>
 #include <iostream>
+#include <fstream>
 #include <sstream>
 #include <iomanip>
 
@@ -32,9 +35,9 @@ o
 POST: Inicializa una clave RSA a partir de la informacion del archivo.
 */
 ClaveRSA::ClaveRSA(std::string &nombreArchivoClaves) {
-    ifstream in(nombreArchivoClaves, std::ios::in);
+    std::ifstream in(nombreArchivoClaves, std::ios::in);
     if (! in.is_open()){
-        std::string err = "Error al abrir archivo de claves."
+        std::string err = "Error al abrir archivo de claves.";
         throw OSError(__FILE__,__LINE__,err.data());
     }
     std::string linea;
@@ -54,6 +57,7 @@ Devuelve una copia de clave actual (ClaveRSA).
 ClaveRSA ClaveRSA::copiar(){
     return std::move(ClaveRSA(this->expPublico,this->expPrivado,this->modulo));
 }
+
 /*
 Copia explicita.
 PRE: Recibe una referencia a otra clave (ClaveRSA &).
@@ -141,22 +145,9 @@ encontrados en el archivo. En el segundo caso, el exponente
 privado se actualiza a valor nulo.
 */
 void ClaveRSA::actualizar(std::string &claveCadena){
-    /*
-    std::vector<std::string> partesClave;
-    std::string separador = " ";
-    Spliter spliter;
-    partesClave = spliter.split(claveCadena, separador);
-    this->expPublico = atoi(partesClave[0].data());
-    if (partesClave.size() < 3){
-        this->modulo = atoi(partesClave[1].data());
-    } else {
-        this->expPrivado = atoi(partesClave[1].data());
-        this->modulo = atoi(partesClave[2].data());
-    }
-    */
     std::stringstream claveStream;
     claveStream.str(claveCadena);
-    std::string separador = " ";
+    char separador = ' ';
     std::string expPublicoCad;
     std::getline(claveStream, expPublicoCad, separador);
     this->expPublico = atoi(expPublicoCad.data());

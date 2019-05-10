@@ -1,6 +1,7 @@
 #include "common_contador_bloq.h"
 
 #include <iostream>
+#include <string>
 
 /*Crea un contador bloqueanteinicializado en uno.*/
 ContadorBloq::ContadorBloq() : cuenta(1){}

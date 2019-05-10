@@ -11,6 +11,7 @@ private:
     uint8_t expPublico;
     uint8_t expPrivado;
     uint16_t modulo;
+
 public:
     //Constructor por default
 
@@ -36,7 +37,7 @@ public:
     <exponente publico> <modulo>
     POST: Inicializa una clave RSA a partir de la informacion del archivo.
     */
-    ClaveRSA(std::string &nombreArchivoClaves);
+    explicit ClaveRSA(std::string &nombreArchivoClaves);
 
     //Destructor
 
@@ -48,6 +49,13 @@ public:
     ClaveRSA(const ClaveRSA &otraClave) = delete;
 
     ClaveRSA& operator=(const ClaveRSA &otraClave) = delete;
+
+
+    /*
+    Copia explicita
+    Devuelve una copia de clave actual (ClaveRSA).
+    */
+    ClaveRSA copiar();
 
     /*
     Copia explicita.

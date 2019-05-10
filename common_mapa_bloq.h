@@ -33,7 +33,7 @@ class MapaBloq {
     El puntero al flujo recibido quedara al final
     del mismo.
     */
-    MapaBloq(std::istream &in);
+    explicit MapaBloq(std::istream &in);
 
     /*Destruye un mapa bloqueante*/
     ~MapaBloq();
