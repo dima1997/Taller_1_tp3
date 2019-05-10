@@ -1,14 +1,16 @@
-#include <fstream>
-#include <iostream>
-#include <string>
+#include "client.h"
+
+#include "client_error.h"
+
+#include "common_error.h"
 #include "common_protocolo.h"
 #include "common_claves.h"
 #include "common_certificado.h"
-#include "common_error.h"
-#include "common_archivo.h"
-
 #include "common_generador_certificados.h"
-#include "client.h"
+
+#include <fstream>
+#include <iostream>
+#include <string>
 
 /*
 PRE: Recibe los nombres (std::string &) del host y
@@ -22,71 +24,6 @@ Cliente::Cliente(const char *host, const char *puerto)
 /*Destruye al cliente.*/
 Cliente::~Cliente(){}
 
-/*
-PRE: Recibe el nombre de un archivo que contiene informacion
-para crear un certificado: sujeto, fecha de inicio, fecha de 
-fin.
-POST: Devuelve un certificado (Certificado) con cargado
-con la informacion del archivo.
-Levanta OSError en caso de error.
-*/
-Certificado Cliente::cargar_info(const char *nombreInfoCertif){
-    Certificado certif;
-    ArchivoCertif archCertif(nombreInfoCertif);
-    archCertif.cargar_info(certif);
-    archCertif.cerrar();
-    return std::move(certif);        
-}
-
-/*
-PRE: Recibe el nombre (const char *) de un archivo, 
-y un archivable (Archivable &).
-POST: Carga el archivable.
-Levanta OSError en caso de error.
-*/
-void Cliente::cargar_archivable(const char* nombre, Archivable &archivable){
-    Archivo arch(nombre, 'r');
-    arch >> archivable;
-    arch.cerrar();
-}
-
-/*
-PRE: Recibe el nombre (const char *) de un archivo 
-que contenga un certificado.
-POST: Devuelve un certificado (Certificado)
-*/
-Certificado Cliente::cargar_certif(const char* nombreArchCertif){
-    Certificado certif;
-    this->cargar_archivable(nombreArchCertif, certif);
-    return std::move(certif);
-}
-/*
-PRE: Recibe el nombre (const char *) de un archivo que 
-contiene un clave publica o completa (publica y privada).
-POST: Devuelve una clave (ClaveRSA) cargado con la 
-informacion del archivo.
-Levanta OSError en caso de error.
-*/
-ClaveRSA Cliente::cargar_claves(const char* nombreClaves){
-    ClaveRSA clave;
-    this->cargar_archivable(nombreClaves, clave);
-    return std::move(clave);
-}
-
-/*
-PRE: Recibe un certificado (Certificado &).
-POST: Guardar el contenido del certificado en un
-archivo de nombre: "<sujeto del certificado>.cert"
-Levanta OSError en caso de error.
-*/
-/*
-void Cliente::guardar_certif(Certificado &certif){
-    std::string nombreArchCertif = certif.getSujeto() + ".cert";
-    Archivo arch(nombreArchCertif.data(),'w');
-    arch << certif;
-    arch.cerrar();
-}
-*/
 /*
 PRE: Recibe un certificado (Certificado &).
 POST: devuelve (uint32_t) e imprime el hash 
@@ -148,16 +85,17 @@ Levanta OSError en caso de error.
 void Cliente::crear_certif(const char *nombreInfoCertif, 
 const char *nombreClavesClnt, const char *nombreClavesSvr){
     try {
-        ClaveRSA clavesClnt = std::move(this->cargar_claves(nombreClavesClnt));
-        GeneradorCertificados genCertif(nombreInfoCertif, clavesClnt);
-        ClaveRSA clavesSvr = std::move(this->cargar_claves(nombreClavesSvr));
+        ClaveRSA clavesClnt(nombreClavesClnt);
+        GeneradorCertificados genCertif(nombreInfoCertif, 
+            std::move(clavesClnt.copiar()));
+        ClaveRSA clavesSvr(nombreClavesSvr);
         Protocolo proto(this->skt);
         proto.enviar_bytes(0,1);
         genCertif.enviar_parametros(proto);
         uint8_t respuesta = proto.recibir_un_byte();
         if (respuesta == 1){
-            std::cout << "Error: ya existe un certificado.\n";
-            return;
+            std::string err = "Error: ya existe un certificado.";
+            throw ClienteError(err.data());
         }   
         Certificado certif;
         certif.recibir(proto);
@@ -168,11 +106,10 @@ const char *nombreClavesClnt, const char *nombreClavesSvr){
         uint32_t hashCalculado = this->calcular_imprimir_hash(certif);
         if (hashSvr != hashCalculado){
             proto.enviar_bytes(1,1);
-            std::cout << "Error: los hashes no coinciden.\n";
-            return;
+            std::string err = "Error: los hashes no coinciden.";
+            throw ClienteError(err.data());
         }
         proto.enviar_bytes(0,1);
-        //this->guardar_certif(certif);
         certif.guardar();
     } catch (OSError &error){
         std::string err = "Error al crear certificado.";
@@ -192,9 +129,8 @@ void Cliente::revocar_certif(const char *nombreCertif,
 const char *nombreClavesClnt, const char *nombreClavesSvr){
     try {
         Certificado certif(nombreCertif);
-        //Certificado certif = std::move(this->cargar_certif(nombreCertif));
-        ClaveRSA clavesClnt = std::move(this->cargar_claves(nombreClavesClnt));
-        ClaveRSA clavesSvr = std::move(this->cargar_claves(nombreClavesSvr));
+        ClaveRSA clavesClnt(nombreClavesClnt);
+        ClaveRSA clavesSvr(nombreClavesSvr);
         Protocolo proto(this->skt);
         proto.enviar_bytes(1,1);
         certif.enviar(proto);
@@ -206,13 +142,13 @@ const char *nombreClavesClnt, const char *nombreClavesSvr){
         uint8_t respuesta = proto.recibir_un_byte();
         if (respuesta == 1){
             //No hay certificado registrado
-            std::cout << "Error: usuario no registrado.\n";
-            return;
+            std::string err = "Error: usuario no registrado.";
+            throw ClienteError(err.data());
         }
         if (respuesta == 2){
             //Los hashes no coinciden
-            std::cout << "Error: los hashes no coinciden.\n";
-            return;
+            std::string err = "Error: los hashes no coinciden.";
+            throw ClienteError(err.data());
         }
     } catch (OSError &error){
         std::string err = "Error al revocar certificado.";
@@ -221,10 +157,11 @@ const char *nombreClavesClnt, const char *nombreClavesSvr){
 }
 
 int main(int argc, const char* argv[]){
-    if (argc != 7){
-        std::cout << "Error: argumentos invalidos.\n";
-    }
     try {
+        if (argc != 7){
+            std::string err = "Error: argumentos invalidos.";
+            throw ClienteError(err.data());
+        }
         const char *host = argv[1];
         const char *puerto = argv[2];
         Cliente cliente(host, puerto);
@@ -238,9 +175,13 @@ int main(int argc, const char* argv[]){
             cliente.crear_certif(nombreCertif, nombreClvClnt, nombreClvSvr);
         } else if (comando == "revoke"){
             cliente.revocar_certif(nombreCertif, nombreClvClnt, nombreClvSvr);
-        } else {
-            std::cout << "Error: argumentos invalidos.\n";   
+        } else {   
+            std::string err = "Error: argumentos invalidos.";
+            throw ClienteError(err.data());
         }
+    } catch (CienteError &error){
+        std::cout << error.what() << "\n";
+        return 0;
     } catch (OSError &error){
         return 1;
     }

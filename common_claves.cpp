@@ -45,6 +45,15 @@ ClaveRSA::ClaveRSA(std::string &nombreArchivoClaves) {
 /*Destruye la clave rsa*/
 ClaveRSA::~ClaveRSA(){}
 
+//Copias
+
+/*
+Copia explicita
+Devuelve una copia de clave actual (ClaveRSA).
+*/
+ClaveRSA ClaveRSA::copiar(){
+    return std::move(ClaveRSA(this->expPublico,this->expPrivado,this->modulo));
+}
 /*
 Copia explicita.
 PRE: Recibe una referencia a otra clave (ClaveRSA &).

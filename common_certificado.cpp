@@ -16,15 +16,15 @@ sujeto (std::string &)
 asunto (std::string &)
 fecha de inicio (std::string &)
 fecha de fin (std::string &)
-modulo (uin16_t)
-exponente publico (uint8_t)
+clave rsa publica (ClaveRSA &)
 POST: Inicializa un certificado.
+La clave rsa recibida queda en estado nulo.
 */
 Certificado::Certificado(uint32_t numeroSerie, std::string &sujeto, 
 std::string &asunto, std::string &fechaInicio, std::string &fechaFin, 
 ClaveRSA &clavesCliente) : numeroSerie(numeroSerie), sujeto(sujeto),
 asunto(asunto), inicio(fechaInicio), fin(fechaFin), 
-clavesCliente(clavesCliente) {}
+clavesCliente(std::move(clavesCliente)) {}
 
 /*
 PRE: Recibe el nombre de un archivo que contenga una representacion 
@@ -33,9 +33,9 @@ POST: Inicializa un certificado a partir de dicho archivo.
 Levanta OSError en caso de error. 
 */
 Certificado::Certificado(std::string &nombreArchivoCertif){
-    ifstream in(nombreArchivoCertif, std::ios::in);
+    std::ifstream in(nombreArchivoCertif, std::ios::in);
     if (! in.is_open()){
-        std::string err = "Error al abrir archivo de certificado.".
+        std::string err = "Error al abrir archivo de certificado.";
         throw OSError(__FILE__,__LINE__,err.data());
     }
     std::string linea;
@@ -113,7 +113,8 @@ std::string Certificado::a_string() const{
     std::stringstream representacion;
     representacion << "certificate:\n";
     representacion << "\tserial number: " << std::dec << this->numeroSerie;
-    representacion << " " << "(" << std::hex << setfill('0') << std::setw(8);
+    representacion << " " << "("; 
+    representacion << std::hex << std::setfill('0') << std::setw(8);
     representacion << this->numeroSerie << ")" << "\n";
     representacion << "\tsubject: " << this->sujeto << "\n";
     representacion << "\tissuer: " << this->asunto << "\n";
@@ -209,12 +210,13 @@ void Certificado::_procesar_linea(std::string &linea, uint16_t &mod, uint8_t &ex
     std::stringstream lineaStream;
     lineaStream.str(lineaSinTabs);
     std::string campo;
-    std::string separador = ": ";
+    char separador = ':';
     std::getline(lineaStream, campo, separador);
     if (! lineaStream.good()){
         return;
     }
-    std::string valor = lineaStream.str();
+    std::string valor = lineaStream.str().substr(1); 
+    // Para eliminar el espacio al ppio.
 
     //
     /*
@@ -250,7 +252,7 @@ void Certificado::_procesar_linea(std::string &linea, uint16_t &mod, uint8_t &ex
     }
     std::stringstream lineaValorStream;
     lineaValorStream.str(valor);
-    separador = " ";
+    char sep = ' ';
     if (campo == "modulus"){
         /*
         std::vector<std::string> modulo;
@@ -259,7 +261,7 @@ void Certificado::_procesar_linea(std::string &linea, uint16_t &mod, uint8_t &ex
         */
         //
         std::string modulo;
-        std::getline(lineaValorStream, modulo, separador);
+        std::getline(lineaValorStream, modulo, sep);
         mod = (uint16_t) atoi(modulo.data());
         return;
     }
@@ -270,7 +272,7 @@ void Certificado::_procesar_linea(std::string &linea, uint16_t &mod, uint8_t &ex
         exponente = spliter.split(valor, separador);
         */
         std::string exponente;
-        std::getline(lineaValorStream, exponente, separador);
+        std::getline(lineaValorStream, exponente, sep);
         exp = (uint8_t) atoi(exponente.data());
         return;
     }
@@ -286,7 +288,7 @@ Levanta OSError en caso de error.
 */
 void Certificado::guardar() const {
     std::string nombreArchivoCertif = this->sujeto + ".cert";
-    ofstream out(nombreArchivoCertif, std::ios::out);
+    std::ofstream out(nombreArchivoCertif, std::ios::out);
     if (! out.is_open()){
         std::string err = "Error al abrir archivo donde guardar certificado.";
         throw OSError(__FILE__,__LINE__,err.data());
@@ -310,21 +312,6 @@ PRE: Recibe un mapa bloqueante (MapaBloq &) de sujetos asociados a
 claves RSA.
 POST: Borra al sujeto del certificado del mapa bloqueante.
 */
-bool Certificado::borrar_sujeto_mapa(MapaBloq &sujetosClaves){
+void Certificado::borrar_sujeto_mapa(MapaBloq &sujetosClaves){
     sujetosClaves.borrar(this->sujeto);
 }
-
-/*Sobrecarga del operador >> de istream para clase Certificado*/
-/*std::istream& operator>>(std::istream &in, Certificado &certif){
-    certif.cargar(in);
-    return in;
-}
-*/
-
-/*Sobrecarga del operador << de ostream para clase Certificado*/
-/*std::ostream& operator<<(std::ostream &out, const Certificado &certif){
-    certif.guardar(out);
-    return out;
-}
-*/
-

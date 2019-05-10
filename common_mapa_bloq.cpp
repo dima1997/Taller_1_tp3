@@ -4,6 +4,7 @@
 #include <mutex>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 
 /*
 Crea un mapa bloqueante ordenado alfabeticamente, 
@@ -38,7 +39,7 @@ MapaBloq::MapaBloq(std::istream &in) {
         */
         lineaStream.str(linea);
         std::string sujeto;
-        std::getline(lineaStream, sujeto, sepSujetoClave);
+        std::getline(lineaStream, sujeto, ' '); 
         if (! lineaStream.good()){
             continue;
         }
@@ -70,7 +71,7 @@ con dicha clave, y por ende no se agrego.
 bool MapaBloq::agregar_si_no_esta(std::string &clave, ClaveRSA &valor){
     std::lock_guard<std::mutex> lock(this->centinela);
     if (this->mapa.find(clave) == this->mapa.end()){
-        this->mapa[clave] = valor;
+        this->mapa[clave].copiarDesde(valor);
         return true;
     }
     return false;

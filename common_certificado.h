@@ -3,7 +3,7 @@
 
 #include "common_protocolo.h"
 #include "common_claves.h"
-#include "common_mapa_bloq.h"}
+#include "common_mapa_bloq.h"
 
 #include <string>
 #include <fstream>
@@ -38,9 +38,9 @@ public:
     asunto (std::string &)
     fecha de inicio (std::string &)
     fecha de fin (std::string &)
-    modulo (uin16_t)
-    exponente publico (uint8_t)
+    clave rsa publica (ClaveRSA &)
     POST: Inicializa un certificado.
+    La clave rsa recibida queda en estado nulo.
     */
     Certificado(uint32_t numeroSerie, std::string &sujeto, std::string &asunto, 
     std::string &fechaInicio, std::string &fechaFin, ClaveRSA &clavesCliente);
@@ -51,7 +51,7 @@ public:
     POST: Inicializa un certificado a partir de dicho archivo.
     Levanta OSError en caso de error. 
     */
-    Certificado::Certificado(std::string &nombreArchivoCertif);
+    Certificado(std::string &nombreArchivoCertif);
 
     /*Crea un certificado con todos sus atributos nulos*/
     Certificado();
@@ -150,13 +150,7 @@ public:
     claves RSA.
     POST: Borra al sujeto del certificado del mapa bloqueante.
     */
-    bool borrar_sujeto_mapa(MapaBloq &sujetosClaves);
+    void borrar_sujeto_mapa(MapaBloq &sujetosClaves);
 };
-
-/*Sobrecarga del operador >> de istream para clase Certificado*/
-//std::istream& operator>>(std::istream &in, Certificado &certif);
-
-/*Sobrecarga del operador << de ostream para clase Certificado*/
-//std::ostream& operator<<(std::ostream &out, const Certificado &certif);
 
 #endif // CERTIFICADO_H

@@ -1,6 +1,7 @@
 #ifndef GENERADOR_CERTIFICADO_H
 #define GENERADOR_CERTIFICADO_H
 
+#include "common_certificado.h"
 #include "common_claves.h"
 #include "common_protocolo.h"
 #include "common_mapa_bloq.h"

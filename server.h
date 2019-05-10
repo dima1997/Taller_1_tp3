@@ -1,26 +1,16 @@
 #ifndef SERVIDOR_H
 #define SERVIDOR_H
-#include "server.h"
+
+#include "common_mapa_bloq.h"
+#include "common_contador_bloq.h"
 
 class Servidor {
-    public:
+public:
     /*Inicializa un servidor*/
     Servidor();
     
     /*Destruye un servidor*/
     ~Servidor();
-    
-    /*
-    PRE: Recibe el nombre (const char *) de un archivo tipo index, que
-    contiene informacion sobre el proximo numero de serie a utilizar y
-    sobre los certificados ya creados; un contador (ContadorBloq &) y
-    un mapa (MapaBloq &) de sujetos y claves de certificados creados.
-    POST: Carga el contador y mapa recibios con la informacion del 
-    archivo.
-    Levanta OSError en caso de error. 
-    */
-    void cargar_contador_mapa(const char* nombreArchIndice, 
-    ContadorBloq &contador, MapaBloq &sujetosClaves);
 
     /*
     PRE: Recibe el nombre del archivo donde guardar el proximo
@@ -35,15 +25,6 @@ class Servidor {
     ContadorBloq &contador, MapaBloq &sujetosClaves);
 
     /*
-    PRE: Recibe el nombre de un archivo que contenga claves 
-    publicas y/o privadas.
-    POST: Devuelve una clave (ClaveRSA) cargado con la 
-    informacion del archivo.
-    Levanta OSError en caso de error. 
-    */
-    ClaveRSA cargar_claves(const char* nombreClaves);
-
-    /*
     PRE: Recibe un 3 cadenas de caracteres (const char *): el puerto
     desde donde escuchar la entrada de clientes, el nombre del archivo
     donde se encuentran las claves del servidor, y el nombre del archivo
@@ -51,7 +32,8 @@ class Servidor {
     de certificados creados.
     POST: Ejecuta un servidor que crea y revoca certificados
     */
-    void ejecutar(const char* puerto, const char* claves, const char* indice);
+    void ejecutar(const char* nombrePuerto, const char* nombreArchivoClaves, 
+    const char* nombreArchivoIndice);
 };
 
 #endif // SERVIDOR_H

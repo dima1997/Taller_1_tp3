@@ -9,7 +9,7 @@
 
 typedef std::map<std::string,ClaveRSA> mapaStrRSA_t;
 
-class MapaBloq : public Archivable {
+class MapaBloq {
     public:
     mapaStrRSA_t mapa;
     mutable std::mutex centinela;

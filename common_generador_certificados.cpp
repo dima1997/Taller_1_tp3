@@ -1,5 +1,6 @@
 #include "common_generador_certificados.h"
 
+#include "common_certificado.h"
 #include "common_mapa_bloq.h"
 #include "common_contador_bloq.h"
 #include "common_tiempo.h"
@@ -40,7 +41,7 @@ certificado se tomara la fecha actual como inicio, la 30
 dias despues la de finalizacion. 
 */
 GeneradorCertificados::GeneradorCertificados(const char *nombreArchivoInfo, 
-ClaveRSA &clavesCliente) : clavesCliente(clavesCliente) { 
+ClaveRSA &clavesCliente) : clavesCliente(std::move(clavesCliente)) { 
         std::ifstream in(nombreArchivoInfo, std::ios::in);
         if (! in.is_open()){
             std::string err = "Error al abrir archivo en generador.";

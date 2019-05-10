@@ -1,4 +1,4 @@
-#include "commmon_contador_bloq.h"
+#include "common_contador_bloq.h"
 
 #include <iostream>
 

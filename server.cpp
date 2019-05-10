@@ -27,6 +27,10 @@ Levanta OSError en caso de error.
 void Servidor::guardar_contador_mapa(const char* nombreArchIndice, 
 ContadorBloq &contador, MapaBloq &sujetosClaves){
     std::ofstream out(nombreArchivoIndice, std::ios::out);
+    if (! out.is_open()){
+        std::string err = "Error al abrir archivo de indices.";
+        throw OSError(__FILE__,__LINE__,err.data());
+    }
     out << contador;
     out << sujetosClaves;
 }
@@ -46,11 +50,12 @@ const char* nombreArchivoClaves, const char* nombreArchivoIndice){
         Socket sktPasivo(nombrePuerto);
         sktPasivo.escuchar(CANTIDAD_CLIENTES_ESCUCHAR);
         ifstream in(nombreArchivoIndice, std::ios::out);
-        //Chequear si esta abierto y levanta errores.
+        if (! in.is_open()){
+            std::string err = "Error al abrir archivo de indices.";
+            throw OSError(__FILE__,__LINE__,err.data());
+        }
         ContadorBloq contador(in);
         MapaBloq sujetosClaves(in);
-        in.close(); 
-        //Lo cierro por que ya no lo necesito y el fin del scope esta lejos
         //this->cargar_contador_mapa(nombreArchivoIndice,contador,sujetosClaves);
         //ClaveRSA claveSvr = std::move(this->cargar_claves(claves));
         ClaveRSA claveSvr(nombreArchivoClaves);
@@ -64,7 +69,7 @@ const char* nombreArchivoClaves, const char* nombreArchivoIndice){
         hiloAceptador.stop();
         hiloAceptador.join();
         this->guardar_contador_mapa(indice, contador, sujetosClaves);
-    } catch (OSError &e){
+    } catch (OSError &error){
         std::string err = "Error al ejecutar servidor.";
         throw OSError(__FILE__,__LINE__, err.data());
     }
