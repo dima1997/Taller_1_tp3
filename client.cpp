@@ -94,7 +94,7 @@ std::string &nombreClavesClnt, std::string &nombreClavesSvr){
         uint8_t respuesta = proto.recibir_un_byte();
         if (respuesta == 1){
             std::string err = "Error: ya existe un certificado.";
-            throw ClienteError(err.data());
+            throw ClienteError(err);
         }   
         Certificado certif;
         certif.recibir(proto);
@@ -106,10 +106,13 @@ std::string &nombreClavesClnt, std::string &nombreClavesSvr){
         if (hashSvr != hashCalculado){
             proto.enviar_bytes(1,1);
             std::string err = "Error: los hashes no coinciden.";
-            throw ClienteError(err.data());
+            throw ClienteError(err);
         }
         proto.enviar_bytes(0,1);
         certif.guardar();
+    } catch (ClienteError &error){
+        //Queremos que siga subiendo en este caso.
+        throw error;
     } catch (OSError &error){
         std::string err = "Error al crear certificado.";
         throw OSError(__FILE__,__LINE__,err.data());
@@ -142,13 +145,16 @@ std::string &nombreClavesClnt, std::string &nombreClavesSvr){
         if (respuesta == 1){
             //No hay certificado registrado
             std::string err = "Error: usuario no registrado.";
-            throw ClienteError(err.data());
+            throw ClienteError(err);
         }
         if (respuesta == 2){
             //Los hashes no coinciden
             std::string err = "Error: los hashes no coinciden.";
-            throw ClienteError(err.data());
+            throw ClienteError(err);
         }
+    } catch (ClienteError &error){
+        //Queremos que siga subiendo en este caso.
+        throw error;
     } catch (OSError &error){
         std::string err = "Error al revocar certificado.";
         throw OSError(__FILE__,__LINE__,err.data());
@@ -159,7 +165,7 @@ int main(int argc, const char* argv[]){
     try {
         if (argc != 7){
             std::string err = "Error: argumentos invalidos.";
-            throw ClienteError(err.data());
+            throw ClienteError(err);
         }
         std::string host = argv[1];
         std::string puerto = argv[2];
@@ -176,7 +182,7 @@ int main(int argc, const char* argv[]){
             cliente.revocar_certif(nombreCertif, nombreClvClnt, nombreClvSvr);
         } else {   
             std::string err = "Error: argumentos invalidos.";
-            throw ClienteError(err.data());
+            throw ClienteError(err);
         }
     } catch (ClienteError &error){
         std::cout << error.what() << "\n";

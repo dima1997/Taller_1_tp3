@@ -112,8 +112,9 @@ Certificado& Certificado::operator=(Certificado &&otroCertif){
 std::string Certificado::a_string() const{
     std::stringstream representacion;
     representacion << "certificate:\n";
-    representacion << "\tserial number: " << std::dec << this->numeroSerie;
-    representacion << " " << "("; 
+    representacion << "\tserial number: "; 
+    representacion << std::dec << this->numeroSerie;
+    representacion << " " << "(0x"; 
     representacion << std::hex << std::setfill('0') << std::setw(8);
     representacion << this->numeroSerie << ")" << "\n";
     representacion << "\tsubject: " << this->sujeto << "\n";

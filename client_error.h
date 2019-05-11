@@ -3,16 +3,27 @@
 
 #include "common_error.h"
 
-class ClienteError : public OSError{
+#include <string>
+
+class ClienteError : public std::exception{
+private:
+    std::string msgError;
+
 public:
     /*
-    PRE: Recibe un varias descripciones de error.
+    PRE: Recibe un mensaje de error (std::string &)
     POST: Inicializa un error de cliente.
     */
-    explicit ClienteError(const char* msgError) noexcept;
+    explicit ClienteError(std::string &msgError) noexcept;
+
 
     /*Destruye un error de cliente*/
     virtual ~ClienteError() noexcept;
+
+    /*
+    Devuelve una descripcion del error.
+    */
+    const char* what() const noexcept ;
 };
 
 #endif // CLIENTE_ERROR_H

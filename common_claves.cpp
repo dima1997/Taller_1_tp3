@@ -153,12 +153,12 @@ void ClaveRSA::actualizar(std::string &claveCadena){
     this->expPublico = atoi(expPublicoCad.data());
     std::string siguiente;
     std::getline(claveStream, siguiente, separador);
-    //Cuidado aqui !!! 
     if (! claveStream.good()){
         this->modulo = atoi(siguiente.data()); 
     } else {
-        this->expPrivado = atoi(siguiente.data());;
-        this->modulo = atoi(claveStream.str().data()); 
+        this->expPrivado = atoi(siguiente.data());
+        std::getline(claveStream, siguiente, separador);
+        this->modulo = atoi(siguiente.data()); 
     }
 }
 
