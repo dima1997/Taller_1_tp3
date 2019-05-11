@@ -1,6 +1,7 @@
 #include "client.h"
 
 #include "client_comando_crear.h"
+#include "client_comando_revocar.h"
 
 #include "common_error.h"
 #include "common_protocolo.h"
@@ -25,56 +26,6 @@ Cliente::Cliente(std::string &host, std::string &puerto)
 Cliente::~Cliente(){}
 
 /*
-PRE: Recibe un certificado (Certificado &).
-POST: devuelve (uint32_t) e imprime el hash 
-del certicado, de la forma:
-"Hash calculado: <hash calculado>\n"
-*/
-uint32_t Cliente::calcular_imprimir_hash(Certificado &certif){
-    uint32_t hashCalc = certif.hashear();
-    std::cout << "Hash calculado: "; 
-    std::cout << std::to_string(hashCalc) << "\n";
-    return hashCalc;
-}
-
-/*
-PRE: Recibe un huella del servidor (uint32_t), las claves
-(ClaveRSA) del cliente y la publica del servidor.
-POST: Desencripta la huella recibida e imprime en el proceso:
-"Huella del servidor: <huella del servidor>"
-"Hash del servidor: <huella desencriptada>"
-Devuelve la huella desencritada.
-*/
-uint32_t Cliente::desencrip_imprimir_huella_svr(uint32_t huellaSvr,
-ClaveRSA &clvClnt, ClaveRSA &clvSvr){
-    std::cout << "Huella del servidor: ";
-    std::cout << std::to_string(huellaSvr) << "\n";
-    uint32_t hashSvr = clvClnt.encriptar_privado(huellaSvr);
-    hashSvr = clvSvr.encriptar_publico(hashSvr);
-    std::cout << "Hash del servidor: "; 
-    std::cout << std::to_string(hashSvr) << "\n";
-    return hashSvr;
-}
-
-/*
-PRE: Recibe un hash del cliente (uint32_t), las claves
-(ClaveRSA) del cliente y la publica del servidor.
-POST: Encripta el hash recibido y lo imprime en el proceso:
-"Hash encriptado con la clave privada: <hash encriptado con clave...>"
-"Huella enviada : <hash completamente encriptado>"
-*/
-uint32_t Cliente::encrip_imprimir_hash_clnt(uint32_t hashClnt,
-ClaveRSA &clvClnt, ClaveRSA &clvSvr){
-    uint32_t huellaCliente = clvClnt.encriptar_privado(hashClnt);
-    std::cout << "Hash encriptado con la clave privada: ";
-    std::cout << std::to_string(huellaCliente) << "\n";
-    huellaCliente = clvSvr.encriptar_publico(huellaCliente);
-    std::cout << "Huella enviada: ";
-    std::cout << std::to_string(huellaCliente) << "\n";
-    return huellaCliente;
-}
-
-/*
 PRE: Recibe el nombre (const char *) del archivo donde esta 
 la informacion con la cual solicitar la creacion de un 
 certificado, del archivo con las claves del cliente, y el
@@ -92,7 +43,7 @@ std::string &nombreClavesClnt, std::string &nombreClavesSvr){
         ClaveRSA clavesSvr(nombreClavesSvr);
         Protocolo proto(this->skt);
         ClienteComandoCrear cmdCrear(proto,clavesClnt, clavesSvr, genCertif);
-        cmdCrear.ejecuta();
+        cmdCrear.ejecutar();
     } catch (OSError &error){
         std::string err = "Error al crear certificado.";
         throw OSError(__FILE__,__LINE__,err.data());
@@ -114,28 +65,8 @@ std::string &nombreClavesClnt, std::string &nombreClavesSvr){
         ClaveRSA clavesClnt(nombreClavesClnt);
         ClaveRSA clavesSvr(nombreClavesSvr);
         Protocolo proto(this->skt);
-        
-        proto.enviar_bytes(1,1);
-        certif.enviar(proto);
-        uint32_t hashClnt = this->calcular_imprimir_hash(certif);
-        uint32_t huellaCliente;
-        huellaCliente = this->encrip_imprimir_hash_clnt(hashClnt, 
-            clavesClnt, clavesSvr);
-        proto.enviar_bytes(huellaCliente, 4);
-        uint8_t respuesta = proto.recibir_un_byte();
-        if (respuesta == 1){
-            //No hay certificado registrado
-            std::string err = "Error: usuario no registrado.";
-            throw ClienteError(err);
-        }
-        if (respuesta == 2){
-            //Los hashes no coinciden
-            std::string err = "Error: los hashes no coinciden.";
-            throw ClienteError(err);
-        }
-    } catch (ClienteError &error){
-        //Queremos que siga subiendo en este caso.
-        throw error;
+        ClienteComandoRevocar cmdRevocar(proto, clavesClnt, clavesSvr, certif);
+        cmdRevocar.ejecutar();
     } catch (OSError &error){
         std::string err = "Error al revocar certificado.";
         throw OSError(__FILE__,__LINE__,err.data());
@@ -151,12 +82,10 @@ int main(int argc, const char* argv[]){
         std::string host = argv[1];
         std::string puerto = argv[2];
         Cliente cliente(host, puerto);
-        
         std::string comando = argv[3];
         std::string nombreCertif = argv[4];
         std::string nombreClvClnt = argv[5];
         std::string nombreClvSvr = argv[6];
-
         if (comando == "new"){
             cliente.crear_certif(nombreCertif, nombreClvClnt, nombreClvSvr);
         } else if (comando == "revoke"){

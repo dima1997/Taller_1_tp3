@@ -2,7 +2,7 @@
 
 #include "client_error.h"
 
-#include "common_procolo.h"
+#include "common_protocolo.h"
 #include "common_generador_certificados.h"
 #include "common_claves.h"
 
@@ -35,8 +35,8 @@ void ClienteComandoCrear::ejecutar(){
         Certificado certif;
         certif.recibir(proto);
         uint32_t huellaSvr = this->proto.recibir_cuatro_bytes();
-        uint32_t hashSvr = this->clavesCliente.encriptar_privado(huellaSvr);
-        hashSvr = this->clavesServidor.encriptar_publico(hashSvr);
+        uint32_t hashSvr = this->privCliente.encriptar_privado(huellaSvr);
+        hashSvr = this->pubServidor.encriptar_publico(hashSvr);
         uint32_t hashCalculado = certif.hashear();
 
         this->imprimir_huellas_hashes(huellaSvr, hashSvr, hashCalculado);

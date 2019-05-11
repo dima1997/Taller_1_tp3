@@ -29,32 +29,15 @@ del mismo.
 MapaBloq::MapaBloq(std::istream &in) {
     std::string linea;
     std::string sepSujetoClave = "; ";
-    //Spliter spliter;
-    std::stringstream lineaStream;
+    std::getline(in,linea);
     while (in.good()) {
-        std::getline(in,linea);
-        /*
-        std::vector<std::string> sujetoClave;
-        sujetoClave = spliter.split(linea, sepSujetoClave);
-        */
-        lineaStream.str(linea);
-        std::string sujeto;
-        std::getline(lineaStream, sujeto, ' '); 
-        if (! lineaStream.good()){
-            continue;
-        }
-        std::string claveCad = lineaStream.str();
-        /*
-        if (sujetoClave.size() != 2){
-            continue;
-        }
-        */
-
-        //std::string sujeto = std::move(sujetoClave[0]);
-        //std::string claveCad = std::move(sujetoClave[1]);
+        size_t posSep = linea.find(sepSujetoClave);
+        std::string sujeto = linea.substr(0,posSep);
+        std::string claveCad = linea.substr(posSep+sepSujetoClave.size());
         ClaveRSA clave;
         clave.actualizar(claveCad);
         this->agregar_si_no_esta(sujeto,clave);
+        std::getline(in,linea);
     }
 }
 

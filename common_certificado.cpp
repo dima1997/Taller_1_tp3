@@ -207,15 +207,10 @@ uint8_t &exp){
     while ((pos = lineaSinTabs.find('\t')) != std::string::npos) {
         lineaSinTabs = lineaSinTabs.substr(pos+1);
     }
-    std::stringstream lineaStream;
-    lineaStream.str(lineaSinTabs);
-    std::string campo;
-    char separador = ':';
-    std::getline(lineaStream, campo, separador);
-    if (! lineaStream.good()){
-        return;
-    }
-    std::string valor = lineaStream.str().substr(1); 
+    std::string separador = ": ";
+    size_t posSep = lineaSinTabs.find(separador);
+    std::string campo = lineaSinTabs.substr(0,posSep);
+    std::string valor = lineaSinTabs.substr(posSep+separador.size());
     // Para eliminar el espacio al ppio.
     if (campo == "serial number"){
         this->numeroSerie = (uint32_t) atoi(valor.data());
@@ -237,30 +232,15 @@ uint8_t &exp){
         this->fin = valor;
         return;
     }
-    std::stringstream lineaValorStream;
-    lineaValorStream.str(valor);
-    char sep = ' ';
+    separador = " ";
+    posSep = valor.find(separador);
+    std::string primerValor = valor.substr(0,posSep); 
     if (campo == "modulus"){
-        /*
-        std::vector<std::string> modulo;
-        separador = " ";
-        modulo = spliter.split(valor, separador);
-        */
-        //
-        std::string modulo;
-        std::getline(lineaValorStream, modulo, sep);
-        mod = (uint16_t) atoi(modulo.data());
+        mod = (uint16_t) atoi(primerValor.data());
         return;
     }
     if (campo == "exponent"){
-        /*
-        std::vector<std::string> exponente;
-        separador = " ";
-        exponente = spliter.split(valor, separador);
-        */
-        std::string exponente;
-        std::getline(lineaValorStream, exponente, sep);
-        exp = (uint8_t) atoi(exponente.data());
+        exp = (uint8_t) atoi(primerValor.data());
         return;
     }
     //Cualquier otra cosa la ignoramos

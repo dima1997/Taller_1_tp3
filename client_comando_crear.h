@@ -1,7 +1,7 @@
 #ifndef CLIENTE_COMANDO_CREAR_H
 #define CLIENTE_COMANDO_CREAR_H
 
-#include "common_procolo.h"
+#include "common_protocolo.h"
 #include "common_generador_certificados.h"
 #include "common_claves.h"
 
