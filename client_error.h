@@ -23,7 +23,7 @@ public:
     /*
     Devuelve una descripcion del error.
     */
-    const char* what() const noexcept ;
+    const char* what() const noexcept;
 };
 
 #endif // CLIENTE_ERROR_H

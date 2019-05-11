@@ -5,7 +5,10 @@
 #include <cstdarg>
 #include <cstring>
 
-/*Construye un OSerror*/
+/*
+PRE: Recibe 1 o mas descripciones del error (const char *)
+POST: Inicializa un OSerror
+*/
 OSError::OSError(const char* fmt, ...) noexcept {
     int _errno = errno;
     va_list args;
@@ -17,7 +20,7 @@ OSError::OSError(const char* fmt, ...) noexcept {
 }
 
 /*
-Devuelve una descripcion del error.
+Devuelve una descripcion (const char *) del error.
 */
 const char* OSError::what() const noexcept{
     return this->msg_error;

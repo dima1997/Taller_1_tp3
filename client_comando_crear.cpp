@@ -7,15 +7,17 @@
 #include "common_claves.h"
 
 #include <cstdint>
+#include <string>
 
 /*
-PRE: Recibe un protocolo de comunicacion (Protocolo &), las claves (ClaveRSA &) privadas del cliente
-las claves publicas del servidor, y un generador de certificados (GeneradorCertificados &).
+PRE: Recibe un protocolo de comunicacion (Protocolo &), las claves 
+(ClaveRSA &) privadas del cliente las claves publicas del servidor, 
+y un generador de certificados (GeneradorCertificados &).
 POST: Inicializa un comando creador de certificados del cliente.
 */
-ClienteComandoCrear::ClienteComandoCrear(Protocolo &proto, ClaveRSA &privCliente, 
-ClaveRSA &pubSvr, GeneradorCertificados &gen) : proto(proto), 
-privCliente(privCliente), pubServidor(pubSvr), genCertif(gen) {}
+ClienteComandoCrear::ClienteComandoCrear(Protocolo &proto, 
+ClaveRSA &privCliente, ClaveRSA &pubSvr, GeneradorCertificados &gen) 
+: proto(proto), privCliente(privCliente), pubServidor(pubSvr), genCertif(gen) {}
 
 /*
 Ejecuta el comando crear del cliente.

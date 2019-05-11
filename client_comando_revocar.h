@@ -17,6 +17,7 @@ private:
     ClaveRSA &privCliente;
     ClaveRSA &pubServidor;
     Certificado &certif;
+
 public:
     /*
     PRE: Recibe un protocolo de comunicacion (Protocolo &), 

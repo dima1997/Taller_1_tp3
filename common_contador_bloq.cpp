@@ -52,7 +52,10 @@ void ContadorBloq::guardar(std::ostream &out) const {
     out << std::to_string(this->cuenta) << "\n";
 }
 
-/*Sobrecarga del operador << de ostream para clase ContadorBloq*/
+/*
+Sobrecarga del operador << de ostream para clase ContadorBloq.
+Escribe en el flujo (std::ostream &) el valor actual del contador. 
+*/
 std::ostream& operator<<(std::ostream &out, const ContadorBloq &contador){
     contador.guardar(out);
     return out;

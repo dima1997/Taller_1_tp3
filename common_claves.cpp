@@ -97,7 +97,7 @@ la clave recibida, a la clave actual. La clave recibida queda
 con atributos nulos.
 Devuelve una referencia a la clave actual.
 */
-ClaveRSA& ClaveRSA::operator=(ClaveRSA&& otraClave){
+ClaveRSA& ClaveRSA::operator=(ClaveRSA&& otraClave) {
     if (this == &otraClave){
         return *this;
     }
@@ -114,7 +114,7 @@ ClaveRSA& ClaveRSA::operator=(ClaveRSA&& otraClave){
 Devuelve una representacion (std::string) de la clave de la forma
 "<exponente publico> <exponente privado> <modulo>"
 */
-std::string ClaveRSA::a_string() const{
+std::string ClaveRSA::a_string() const {
     std::string representacion;
     representacion += std::to_string(this->expPublico) + " ";
     representacion += std::to_string(this->expPrivado) + " ";
@@ -126,7 +126,7 @@ std::string ClaveRSA::a_string() const{
 Devuelve una representacion (std::string) de la clave publica de 
 la forma: "<exponente publico> <modulo>"
 */
-std::string ClaveRSA::a_string_publica() const{
+std::string ClaveRSA::a_string_publica() const {
     std::string representacion;
     representacion += std::to_string(this->expPublico) + " ";
     representacion += std::to_string(this->modulo);
@@ -144,7 +144,7 @@ POST: Actualiza los valores de la claves rsa, con los
 encontrados en el archivo. En el segundo caso, el exponente 
 privado se actualiza a valor nulo.
 */
-void ClaveRSA::actualizar(std::string &claveCadena){
+void ClaveRSA::actualizar(std::string &claveCadena) {
     std::stringstream claveStream;
     claveStream.str(claveCadena);
     char separador = ' ';

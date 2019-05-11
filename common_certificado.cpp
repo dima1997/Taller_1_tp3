@@ -10,6 +10,65 @@
 #include <iomanip>
 
 /*
+PRE: Recibe una referencia a una linea (std::string &)
+de un archivo que contiene un certificado, una referencia
+a un moduolo (uint16_t &) y una referencia a un exponente 
+(uin8_t &).
+POST: Procesa la linea guardando informacion de ella
+segun corresponda, para modelizar el certificado del
+archivo en la clase actual.
+Las lineas que correspondan al modulo y exponenete las procesa
+y guarda su valor en las referencias recibidas.
+*/
+void Certificado::_procesar_linea(std::string &linea, uint16_t &mod, 
+uint8_t &exp){
+    size_t pos = 0;
+    std::string lineaSinTabs = linea; 
+    while ((pos = lineaSinTabs.find('\t')) != std::string::npos) {
+        lineaSinTabs = lineaSinTabs.substr(pos+1);
+    }
+    std::string separador = ": ";
+    size_t posSep = lineaSinTabs.find(separador);
+    std::string campo = lineaSinTabs.substr(0,posSep);
+    std::string valor = lineaSinTabs.substr(posSep+separador.size());
+    // Para eliminar el espacio al ppio.
+    if (campo == "serial number"){
+        this->numeroSerie = (uint32_t) atoi(valor.data());
+        return;
+    }
+    if (campo == "issuer"){
+        this->asunto = valor;
+        return;
+    }
+    if (campo == "subject"){
+        this->sujeto = valor;
+        return;
+    }
+    if (campo == "not before"){
+        this->inicio = valor;
+        return;
+    }
+    if (campo == "not after"){
+        this->fin = valor;
+        return;
+    }
+    separador = " ";
+    posSep = valor.find(separador);
+    std::string primerValor = valor.substr(0,posSep); 
+    if (campo == "modulus"){
+        mod = (uint16_t) atoi(primerValor.data());
+        return;
+    }
+    if (campo == "exponent"){
+        exp = (uint8_t) atoi(primerValor.data());
+        return;
+    }
+    //Cualquier otra cosa la ignoramos
+    //Suponemos que el certificado no va a tener errores.
+    return;
+}
+
+/*
 PRE: Recibe :
 numero de serie (uint32_t)
 sujeto (std::string &)
@@ -188,65 +247,6 @@ void Certificado::enviar(Protocolo &proto){
         throw OSError(__FILE__,__LINE__,err.data());
     }
 }
-
-/*
-PRE: Recibe una referencia a una linea (std::string &)
-de un archivo que contiene un certificado, una referencia
-a un moduolo (uint16_t &) y una referencia a un exponente 
-(uin8_t &).
-POST: Procesa la linea guardando informacion de ella
-segun corresponda, para modelizar el certificado del
-archivo en la clase actual.
-Las lineas que correspondan al modulo y exponenete las procesa
-y guarda su valor en las referencias recibidas.
-*/
-void Certificado::_procesar_linea(std::string &linea, uint16_t &mod, 
-uint8_t &exp){
-    size_t pos = 0;
-    std::string lineaSinTabs = linea; 
-    while ((pos = lineaSinTabs.find('\t')) != std::string::npos) {
-        lineaSinTabs = lineaSinTabs.substr(pos+1);
-    }
-    std::string separador = ": ";
-    size_t posSep = lineaSinTabs.find(separador);
-    std::string campo = lineaSinTabs.substr(0,posSep);
-    std::string valor = lineaSinTabs.substr(posSep+separador.size());
-    // Para eliminar el espacio al ppio.
-    if (campo == "serial number"){
-        this->numeroSerie = (uint32_t) atoi(valor.data());
-        return;
-    }
-    if (campo == "issuer"){
-        this->asunto = valor;
-        return;
-    }
-    if (campo == "subject"){
-        this->sujeto = valor;
-        return;
-    }
-    if (campo == "not before"){
-        this->inicio = valor;
-        return;
-    }
-    if (campo == "not after"){
-        this->fin = valor;
-        return;
-    }
-    separador = " ";
-    posSep = valor.find(separador);
-    std::string primerValor = valor.substr(0,posSep); 
-    if (campo == "modulus"){
-        mod = (uint16_t) atoi(primerValor.data());
-        return;
-    }
-    if (campo == "exponent"){
-        exp = (uint8_t) atoi(primerValor.data());
-        return;
-    }
-    //Cualquier otra cosa la ignoramos
-    //Suponemos que el certificado no va a tener errores.
-    return;
-} 
 
 /*
 Guardar una representacion del certificado en un archivo de nombre 

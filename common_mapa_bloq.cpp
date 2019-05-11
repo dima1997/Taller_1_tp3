@@ -102,7 +102,12 @@ void MapaBloq::guardar(std::ostream &out) const {
     }
 }
 
-/*Sobrecarga del operador << de ostream para clase MapaBloq*/
+/*
+Sobrecarga del operador << de ostream para clase MapaBloq.
+Escribe en el flujo (std::ostream &) los sujeto y claves rsa
+asociadas, de la forma:
+<sujeto>; <clave publica>\n
+*/
 std::ostream& operator<<(std::ostream &out, const MapaBloq &mapa){
     mapa.guardar(out);
     return out;

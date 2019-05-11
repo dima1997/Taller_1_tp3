@@ -8,12 +8,14 @@ private:
     char msg_error[BUF_LEN];
     
 public:
-    /*Crea un OSError*/
+    /*
+    PRE: Recibe 1 o mas descripciones del error (const char *)
+    POST: Inicializa un OSerror
+    */
     explicit OSError(const char* fmt, ...) noexcept;
     
     /*
-    Devuelve una cadena de caracteres (const char*) 
-    describiendo el error
+    Devuelve una descripcion (const char *) del error.
     */
     virtual const char *what() const noexcept;
     

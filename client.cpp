@@ -39,7 +39,9 @@ void Cliente::crear_certif(std::string &nombreInfoCertif,
 std::string &nombreClavesClnt, std::string &nombreClavesSvr){
     try {
         ClaveRSA clavesClnt(nombreClavesClnt);
-        GeneradorCertificados genCertif(nombreInfoCertif, clavesClnt);
+        ClaveRSA clavesClntCopia = std::move(clavesClnt.copiar());
+        //Paso una copia porque no quiero perder los atributos de clavesClnt
+        GeneradorCertificados genCertif(nombreInfoCertif, clavesClntCopia);
         ClaveRSA clavesSvr(nombreClavesSvr);
         Protocolo proto(this->skt);
         ClienteComandoCrear cmdCrear(proto,clavesClnt, clavesSvr, genCertif);

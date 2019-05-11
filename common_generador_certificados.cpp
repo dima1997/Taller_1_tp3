@@ -40,9 +40,10 @@ POST: Crea un generador de certificados.
 Si no se especificado fecha de inicio y finalizacion del 
 certificado se tomara la fecha actual como inicio, la 30
 dias despues la de finalizacion. 
+Las claves del cliente recibido quedan en estado nulo.
 */
 GeneradorCertificados::GeneradorCertificados(std::string &nombreArchivoInfo, 
-ClaveRSA &clavesCliente) : clavesCliente(std::move(clavesCliente.copiar())) { 
+ClaveRSA &clavesCliente) : clavesCliente(std::move(clavesCliente)) { 
         std::ifstream in(nombreArchivoInfo, std::ios::in);
         if (! in.is_open()){
             std::string err = "Error al abrir archivo en generador.";

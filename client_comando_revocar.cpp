@@ -9,6 +9,7 @@
 
 #include <cstdint>
 #include <iostream>
+#include <string>
 
 /*
 PRE: Recibe un protocolo de comunicacion (Protocolo &), 
