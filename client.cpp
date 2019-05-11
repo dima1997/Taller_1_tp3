@@ -1,6 +1,6 @@
 #include "client.h"
 
-#include "client_error.h"
+#include "client_comando_crear.h"
 
 #include "common_error.h"
 #include "common_protocolo.h"
@@ -80,6 +80,8 @@ la informacion con la cual solicitar la creacion de un
 certificado, del archivo con las claves del cliente, y el
 de la claves publicas del servidor.
 POST: Ejecuta el procedimiento para crear un certificado.
+Levanta ClienteError en caso del algun error esperador en el 
+comportamiento del cliente.
 Levanta OSError en caso de error.
 */
 void Cliente::crear_certif(std::string &nombreInfoCertif, 
@@ -89,31 +91,8 @@ std::string &nombreClavesClnt, std::string &nombreClavesSvr){
         GeneradorCertificados genCertif(nombreInfoCertif, clavesClnt);
         ClaveRSA clavesSvr(nombreClavesSvr);
         Protocolo proto(this->skt);
-
-        proto.enviar_bytes(0,1);
-        genCertif.enviar_parametros(proto);
-        uint8_t respuesta = proto.recibir_un_byte();
-        if (respuesta == 1){
-            std::string err = "Error: ya existe un certificado.";
-            throw ClienteError(err);
-        }   
-        Certificado certif;
-        certif.recibir(proto);
-        uint32_t huellaSvr = proto.recibir_cuatro_bytes();
-        uint32_t hashSvr;
-        hashSvr = this->desencrip_imprimir_huella_svr(huellaSvr, 
-            clavesClnt, clavesSvr);
-        uint32_t hashCalculado = this->calcular_imprimir_hash(certif);
-        if (hashSvr != hashCalculado){
-            proto.enviar_bytes(1,1);
-            std::string err = "Error: los hashes no coinciden.";
-            throw ClienteError(err);
-        }
-        proto.enviar_bytes(0,1);
-        certif.guardar();
-    } catch (ClienteError &error){
-        //Queremos que siga subiendo en este caso.
-        throw error;
+        ClienteComandoCrear cmdCrear(proto,clavesClnt, clavesSvr, genCertif);
+        cmdCrear.ejecuta();
     } catch (OSError &error){
         std::string err = "Error al crear certificado.";
         throw OSError(__FILE__,__LINE__,err.data());

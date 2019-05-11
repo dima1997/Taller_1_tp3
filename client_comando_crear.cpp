@@ -1,5 +1,13 @@
 #include "client_comando_crear.h"
 
+#include "client_error.h"
+
+#include "common_procolo.h"
+#include "common_generador_certificados.h"
+#include "common_claves.h"
+
+#include <cstdint>
+
 /*
 PRE: Recibe un protocolo de comunicacion (Protocolo &), las claves (ClaveRSA &) privadas del cliente
 las claves publicas del servidor, y un generador de certificados (GeneradorCertificados &).
@@ -65,6 +73,5 @@ uint32_t hashSvr, uint32_t hashCalculado) {
     std::cout << std::dec << hashCalculado << "\n";
 }
 
-
 /*Destruye el comando crear del cliente*/
-ClienteComandoCrear::~ClienteComandoCrear(){}
+ClienteComandoCrear::~ClienteComandoCrear() {}
