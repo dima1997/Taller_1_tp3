@@ -89,6 +89,7 @@ std::string &nombreClavesClnt, std::string &nombreClavesSvr){
         GeneradorCertificados genCertif(nombreInfoCertif, clavesClnt);
         ClaveRSA clavesSvr(nombreClavesSvr);
         Protocolo proto(this->skt);
+
         proto.enviar_bytes(0,1);
         genCertif.enviar_parametros(proto);
         uint8_t respuesta = proto.recibir_un_byte();
@@ -134,6 +135,7 @@ std::string &nombreClavesClnt, std::string &nombreClavesSvr){
         ClaveRSA clavesClnt(nombreClavesClnt);
         ClaveRSA clavesSvr(nombreClavesSvr);
         Protocolo proto(this->skt);
+        
         proto.enviar_bytes(1,1);
         certif.enviar(proto);
         uint32_t hashClnt = this->calcular_imprimir_hash(certif);

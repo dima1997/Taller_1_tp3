@@ -24,14 +24,6 @@ public:
 
     /*
     PRE: Recibe un certificado (Certificado &).
-    POST: Guardar el contenido del certificado en un
-    archivo de nombre: "<sujeto del certificado>.cert"
-    Levanta OSError en caso de error.
-    */
-    //void guardar_certif(Certificado &certif);
-
-    /*
-    PRE: Recibe un certificado (Certificado &).
     POST: devuelve (uint32_t) e imprime el hash 
     del certicado, de la forma:
     "Hash calculado: <hash calculado>\n"
