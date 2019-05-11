@@ -41,6 +41,15 @@ public:
     */
     GeneradorCertificados(std::string &nombreArchivoInfo, 
     ClaveRSA &clavesCliente);
+
+    /*
+    PRE: Recibe un protocolo de comunicacion (Protocolo &).
+    POST: Inicializa un generador de certificados a partir
+    de la informacion recibida a traves del protocolo, enviada
+    segun el metodo enviar_parametros() de esta misma clase.
+    Levanta OSError en caso de error.
+    */
+    explicit GeneradorCertificados(Protocolo &proto);
     
     /*Destruye un generador de certificados.*/
     ~GeneradorCertificados();
@@ -50,7 +59,6 @@ public:
     GeneradorCertificados(const GeneradorCertificados &otroGenerador) = delete;
     GeneradorCertificados& operator=(const GeneradorCertificados 
     &otroGenerador) = delete;
-
 
     /*
     PRE: Recibe una doble referencia a otro generador de 

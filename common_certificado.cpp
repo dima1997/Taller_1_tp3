@@ -107,6 +107,21 @@ Certificado::Certificado(std::string &nombreArchivoCertif){
     this->clavesCliente = std::move(ClaveRSA(exp, 0, modulo));
 }
 
+/*
+PRE: Recibe un protocolo de comunicacion (Protocolo &).
+POST: Inicializa un Certificado a partir de la informacion
+recibida a traves del protocolo, enviada segun el metodo 
+enviar() de esta misma clase.
+*/
+Certificado::Certificado(Protocolo &proto){
+    try {
+        this->recibir(proto);
+    } catch (OSError &error) {
+        std::string err = "Error al inicializar certificado desde protocolo.";
+        throw OSError(__FILE__,__LINE__,err.data());
+    }
+}
+
 /*Inicializa un certificado sin informacion.*/
 Certificado::Certificado(){
     this->numeroSerie = 0;

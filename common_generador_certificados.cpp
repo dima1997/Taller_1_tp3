@@ -67,6 +67,22 @@ ClaveRSA &clavesCliente) : clavesCliente(std::move(clavesCliente)) {
         this->fechaFin = std::move(linea);
 }
 
+/*
+PRE: Recibe un protocolo de comunicacion (Protocolo &).
+POST: Inicializa un generador de certificados a partir
+de la informacion recibida a traves del protocolo, enviada
+segun el metodo enviar_parametros() de esta misma clase.
+Levanta OSError en caso de error.
+*/
+GeneradorCertificados::GeneradorCertificados(Protocolo &proto) {
+    try {
+        this->recibir_parametros(proto);
+    } catch (OSError &error){
+        std::string err = "Error al inicilizar generador desde protocolo.";
+        throw OSError(__FILE__,__LINE__,err.data());
+    }
+}
+
 /*Destruye un generador de certificados.*/
 GeneradorCertificados::~GeneradorCertificados() {}
 

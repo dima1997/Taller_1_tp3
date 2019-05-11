@@ -73,7 +73,7 @@ uint32_t hashEncriptado, uint32_t hashCalculado) {
     std::cout << std::dec << hashCalculado << "\n";
     std::cout << "Hash encriptado con la clave privada: ";
     std::cout << std::dec << hashEncriptado << "\n";
-    std::cout << "Huella enviada ";
+    std::cout << "Huella enviada: ";
     std::cout << std::dec << huellaEnviada << "\n";
 }
 

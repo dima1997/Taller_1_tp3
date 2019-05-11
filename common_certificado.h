@@ -53,6 +53,14 @@ public:
     */
     explicit Certificado(std::string &nombreArchivoCertif);
 
+    /*
+    PRE: Recibe un protocolo de comunicacion (Protocolo &).
+    POST: Inicializa un Certificado a partir de la informacion
+    recibida a traves del protocolo, enviada segun el metodo 
+    enviar() de esta misma clase.
+    */
+    explicit Certificado(Protocolo &proto);
+
     /*Crea un certificado con todos sus atributos nulos*/
     Certificado();
 

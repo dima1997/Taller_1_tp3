@@ -50,8 +50,7 @@ certificado.
 void HCertificador::crear(Protocolo &proto){
     Certificado certif;
     try {
-        GeneradorCertificados genCertif;
-        genCertif.recibir_parametros(proto);
+        GeneradorCertificados genCertif(proto);
         if (! genCertif.agregar_sujeto_clave_mapa(this->sujetosClaves)){
             // Ya tiene certificado vigente
             proto.enviar_bytes(1,1);
@@ -88,9 +87,8 @@ POST: Ejecuta el procedimiento para la revocacion de un
 certificado.
 */
 void HCertificador::revocar(Protocolo &proto){
-    Certificado certif;
     try {
-        certif.recibir(proto);
+        Certificado certif(proto);
         uint32_t huellaCliente = proto.recibir_cuatro_bytes();
         ClaveRSA claveCliente;
         if (! certif.obtener_sujeto_mapa(this->sujetosClaves, claveCliente)){
